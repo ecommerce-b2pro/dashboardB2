@@ -19,9 +19,21 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 let JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET || JWT_SECRET === 'dev-secret-change-me' || JWT_SECRET.length < 32) {
     if (NODE_ENV === 'production') {
-        JWT_SECRET = crypto.randomBytes(48).toString('hex');
-        console.warn('⚠️  JWT_SECRET não configurado. Um segredo temporário foi gerado para esta sessão.');
-        console.warn('⚠️  Configure JWT_SECRET (>=32 chars) nas variáveis de ambiente para manter sessões entre reinicializações.');
+        // Tenta carregar segredo persistido de execuções anteriores para não invalidar sessões
+        const secretFile = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), '.jwt_secret');
+        try {
+            if (fs.existsSync(secretFile)) {
+                JWT_SECRET = fs.readFileSync(secretFile, 'utf8').trim();
+            } else {
+                JWT_SECRET = crypto.randomBytes(48).toString('hex');
+                fs.mkdirSync(path.dirname(secretFile), { recursive: true });
+                fs.writeFileSync(secretFile, JWT_SECRET, { mode: 0o600 });
+            }
+            console.warn('⚠️  JWT_SECRET lido do arquivo local. Configure JWT_SECRET como variável de ambiente para maior segurança.');
+        } catch (_) {
+            JWT_SECRET = crypto.randomBytes(48).toString('hex');
+            console.warn('⚠️  JWT_SECRET não configurado. Segredo temporário gerado — sessões serão invalidadas ao reiniciar.');
+        }
     } else {
         JWT_SECRET = 'dev-secret-change-me';
     }
@@ -31,7 +43,7 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@hubvendas.com').toLowerCa
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'admin').trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'TroqueEstaSenhaAgora123!';
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'dashboard.db');
 const EXCEL_FILE = path.join(__dirname, 'dados.xlsx');
 
