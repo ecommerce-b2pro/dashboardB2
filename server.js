@@ -10,7 +10,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -44,38 +44,35 @@ const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'admin').trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'TroqueEstaSenhaAgora123!';
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'dashboard.db');
 const EXCEL_FILE = path.join(__dirname, 'dados.xlsx');
 
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const db = new Database(DB_FILE);
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
-function dbRun(sql, params = []) {
-    try {
-        const result = db.prepare(sql).run(params);
-        return Promise.resolve({ lastID: result.lastInsertRowid, changes: result.changes });
-    } catch (err) {
-        return Promise.reject(err);
-    }
+function convertPlaceholders(sql) {
+    let i = 0;
+    return sql.replace(/\?/g, () => `$${++i}`);
 }
 
-function dbGet(sql, params = []) {
-    try {
-        return Promise.resolve(db.prepare(sql).get(params));
-    } catch (err) {
-        return Promise.reject(err);
-    }
+async function dbRun(sql, params = []) {
+    const result = await pool.query(convertPlaceholders(sql), params);
+    return { changes: result.rowCount };
 }
 
-function dbAll(sql, params = []) {
-    try {
-        return Promise.resolve(db.prepare(sql).all(params));
-    } catch (err) {
-        return Promise.reject(err);
-    }
+async function dbGet(sql, params = []) {
+    const result = await pool.query(convertPlaceholders(sql), params);
+    return result.rows[0];
+}
+
+async function dbAll(sql, params = []) {
+    const result = await pool.query(convertPlaceholders(sql), params);
+    return result.rows;
 }
 
 function converterData(dataStr) {
@@ -167,7 +164,9 @@ async function gerarUsernameUnico(base) {
 }
 
 async function garantirColunaUsername() {
-    const colunas = await dbAll('PRAGMA table_info(users)');
+    const colunas = await dbAll(
+        "SELECT column_name AS name FROM information_schema.columns WHERE table_name = 'users' AND table_schema = current_schema()"
+    );
     const temUsername = colunas.some((c) => c.name === 'username');
 
     if (!temUsername) {
@@ -186,7 +185,9 @@ async function garantirColunaUsername() {
 }
 
 async function garantirColunasControleUsuarios() {
-    const colunas = await dbAll('PRAGMA table_info(users)');
+    const colunas = await dbAll(
+        "SELECT column_name AS name FROM information_schema.columns WHERE table_name = 'users' AND table_schema = current_schema()"
+    );
     const temStatus = colunas.some((c) => c.name === 'status');
     const temApprovedBy = colunas.some((c) => c.name === 'approved_by');
 
@@ -203,26 +204,26 @@ async function garantirColunasControleUsuarios() {
 async function inicializarBanco() {
     await dbRun(`
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'user',
             status TEXT NOT NULL DEFAULT 'active',
             approved_by INTEGER,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     `);
 
     await dbRun(`
         CREATE TABLE IF NOT EXISTS sales (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             data TEXT NOT NULL,
             ecommerce TEXT NOT NULL,
             vendas INTEGER NOT NULL,
-            receita REAL NOT NULL,
+            receita NUMERIC(15,2) NOT NULL,
             created_by INTEGER,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             FOREIGN KEY(created_by) REFERENCES users(id)
         )
     `);
@@ -247,7 +248,7 @@ async function inicializarBanco() {
         await dbRun('UPDATE users SET role = ?, status = ? WHERE email = ?', ['admin', 'active', ADMIN_EMAIL]);
     }
 
-    const contagemSales = await dbGet('SELECT COUNT(*) AS total FROM sales');
+    const contagemSales = await dbGet('SELECT COUNT(*)::int AS total FROM sales');
     if (!contagemSales || contagemSales.total === 0) {
         await migrarExcelParaBanco();
     }
@@ -456,7 +457,7 @@ app.get('/api/admin/users', autenticarToken, autorizarRoles('admin'), async (req
         const users = await dbAll(
             `SELECT id, username, email, role, status, created_at
              FROM users
-             ORDER BY datetime(created_at) DESC, id DESC`
+             ORDER BY created_at DESC, id DESC`
         );
         return res.json({ users });
     } catch (error) {
@@ -794,7 +795,7 @@ inicializarBanco()
             console.log(`\n========================================`);
             console.log(`🚀 Servidor iniciado com sucesso!`);
             console.log(`📊 Abra em: http://localhost:${PORT}`);
-            console.log(`🗄️ Banco SQLite: ${DB_FILE}`);
+            console.log(`🗄️  Banco PostgreSQL: ${(process.env.DATABASE_URL || '').replace(/:[^:@]+@/, ':***@')}`);
             console.log(`========================================\n`);
         });
     })

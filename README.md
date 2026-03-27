@@ -1,6 +1,6 @@
 # 📊 Hub de Vendas — Dashboard B2
 
-Dashboard de vendas com importação de Excel, autenticação JWT e banco de dados SQLite.
+Dashboard de vendas com importação de Excel, autenticação JWT e banco de dados PostgreSQL.
 
 ---
 
@@ -121,4 +121,5 @@ git push heroku main
 | `JWT_EXPIRES_IN` | Não | Validade do token (padrão: `8h`) |
 | `ADMIN_EMAIL` | Não | E-mail do administrador |
 | `ADMIN_PASSWORD` | Não | Senha inicial do administrador |
-| `DATA_DIR` | Não | Caminho do banco SQLite (padrão: `./data`; use `/var/data` no Render) |
+| `DATA_DIR` | Não | Diretório para arquivos de dados (padrão: `./data`; usado para persistir JWT_SECRET) |
+| `DATABASE_URL` | Sim | URL de conexão PostgreSQL (ex: `postgresql://user:pass@host:5432/db`) |

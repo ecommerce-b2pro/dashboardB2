@@ -1,3 +1,9 @@
+databases:
+  - name: dashboard-db
+    plan: free
+    databaseName: dashboard_vendas
+    user: dashboard_user
+
 services:
   - type: web
     name: dashboard-vendas
@@ -5,20 +11,18 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /
-    disk:
-      name: dados
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dashboard-db
+          property: connectionString
       - key: JWT_SECRET
-        generateValue: true  # Deve ter >= 32 caracteres; o Render gera automaticamente um valor seguro
+        generateValue: true
       - key: JWT_EXPIRES_IN
         value: 8h
       - key: ADMIN_EMAIL
         value: admin@hubvendas.com
       - key: ADMIN_PASSWORD
         generateValue: true
-      - key: DATA_DIR
-        value: /var/data
