@@ -2,7 +2,7 @@ services:
   - type: web
     name: dashboard-vendas
     runtime: node
-    buildCommand: npm install && npm rebuild sqlite3 --build-from-source
+    buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /
     disk:
