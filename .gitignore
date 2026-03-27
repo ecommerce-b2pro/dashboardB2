@@ -1,0 +1,28 @@
+# Dependências
+node_modules/
+
+# Banco de dados (contém dados sensíveis / senhas hash)
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Variáveis de ambiente (segredos)
+.env
+
+# Arquivos de dados sensíveis
+dados.xlsx
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp

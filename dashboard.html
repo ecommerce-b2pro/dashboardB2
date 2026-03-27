@@ -1,0 +1,2949 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Vendas</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230f0a1a'/%3E%3Cstop offset='100%25' stop-color='%232d1b69'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='url(%23g)'/%3E%3Ctext x='50%25' y='57%25' text-anchor='middle' font-family='Segoe UI, Arial, sans-serif' font-size='30' font-weight='700' fill='%23c084fc'%3EB2%3C/text%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0a1a 0%, #1a0b2e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        body.auth-locked .container {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #0a0614 0%, #0f0a1a 100%);
+            padding: 30px 0;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 30px;
+            border-bottom: 2px solid #4c1d95;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            color: #c084fc;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 10px 0;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 15px 20px;
+            color: #cbd5e1;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background-color: #2d1b69;
+            color: #c084fc;
+            border-left-color: #c084fc;
+            padding-left: 25px;
+        }
+
+        .nav-link.active {
+            background-color: #2d1b69;
+            color: #c084fc;
+            border-left-color: #c084fc;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            color: #c084fc;
+            margin-bottom: 30px;
+        }
+
+        .filters-container {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 25px;
+            border-radius: 14px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(196, 132, 252, 0.3);
+            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 25px rgba(192, 132, 252, 0.25);
+            backdrop-filter: blur(5px);
+        }
+
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #d8b4fe;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px;
+            background-color: #0f0a1a;
+            border: 2px solid #4c1d95;
+            border-radius: 6px;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .month-picker-wrapper {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .month-picker-wrapper input[type="month"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #c084fc;
+            background-color: #1e293b;
+        }
+
+        .filter-group select option {
+            background-color: #0f0a1a;
+            color: #e2e8f0;
+        }
+
+        #filterEcommerces {
+            min-height: 120px;
+            color-scheme: dark;
+        }
+
+        #filterEcommerces option {
+            padding: 6px 8px;
+        }
+
+        #filterEcommerces option:checked {
+            box-shadow: inset 0 0 0 9999px #5b21b6;
+            color: #ffffff;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(109, 40, 217, 0.3), 0 0 20px rgba(109, 40, 217, 0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(109, 40, 217, 0.4), 0 0 30px rgba(109, 40, 217, 0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #7c2d92 0%, #6b21a8 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(124, 45, 146, 0.3), 0 0 20px rgba(124, 45, 146, 0.1);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 45, 146, 0.4), 0 0 30px rgba(124, 45, 146, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3), 0 0 20px rgba(147, 51, 234, 0.1);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(147, 51, 234, 0.4), 0 0 30px rgba(147, 51, 234, 0.2);
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 25px;
+            border-radius: 14px;
+            border: 1px solid rgba(196, 132, 252, 0.4);
+            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
+            backdrop-filter: blur(4px);
+            border-left: 4px solid #c084fc;
+        }
+
+        .metric-label {
+            color: #a78bfa;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #c084fc;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-box {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 25px;
+            border-radius: 14px;
+            border: 1px solid rgba(196, 132, 252, 0.4);
+            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
+            backdrop-filter: blur(4px);
+        }
+
+        .chart-title {
+            color: #c084fc;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .comparison-filters {
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b69 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(192, 132, 252, 0.15), 0 0 60px rgba(168, 85, 247, 0.1);
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-group h3 {
+            color: #c084fc;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .comparison-filters-inner {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .table-container {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 25px;
+            border-radius: 14px;
+            border: 1px solid rgba(196, 132, 252, 0.3);
+            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 25px rgba(192, 132, 252, 0.25);
+            backdrop-filter: blur(4px);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table thead {
+            background-color: #0f0a1a;
+        }
+
+        table th {
+            padding: 15px;
+            text-align: left;
+            color: #c084fc;
+            font-weight: 600;
+            border-bottom: 2px solid #4c1d95;
+        }
+
+        table td {
+            padding: 15px;
+            border-bottom: 1px solid #4c1d95;
+        }
+
+        table tbody tr:hover {
+            background-color: #0f0a1a;
+        }
+
+        .form-container {
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b69 100%);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(192, 132, 252, 0.15), 0 0 60px rgba(168, 85, 247, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d8b4fe;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f0a1a;
+            border: 2px solid #4c1d95;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #c084fc;
+            background-color: #1a0b2e;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #c084fc;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #1a0b2e 0%, #2d1b69 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(192, 132, 252, 0.15), 0 0 60px rgba(168, 85, 247, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(109, 40, 217, 0.3), 0 0 20px rgba(109, 40, 217, 0.1);
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(109, 40, 217, 0.4), 0 0 30px rgba(109, 40, 217, 0.2);
+        }
+
+        .file-name {
+            margin-top: 10px;
+            color: #d8b4fe;
+            font-size: 14px;
+        }
+
+        .comparison-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .main-content {
+                margin-left: 200px;
+                padding: 20px;
+            }
+
+            .page-header h1 {
+                font-size: 24px;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-row {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-filters-inner {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* STYLES PARA DATE RANGE PICKER */
+        .date-range-display {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: #1a0b2e;
+            border: 1px solid #4c1d95;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .date-range-display:hover {
+            background: #0f0a1a;
+            border-color: #c084fc;
+        }
+
+        .date-range-display-text {
+            color: #d8b4fe;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        /* CALENDÁRIO MODAL */
+        .calendar-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calendar-modal.active {
+            display: flex;
+        }
+
+        .calendar-container {
+            background: #1a0b2e;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(192, 132, 252, 0.15), 0 0 60px rgba(168, 85, 247, 0.1);
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #4c1d95;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header button {
+            background: none;
+            border: none;
+            color: #c084fc;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-header button:hover {
+            color: #d8b4fe;
+        }
+
+        .calendar-header h3 {
+            color: #d8b4fe;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            color: #c084fc;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 5px;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #0f0a1a;
+            color: #cbd5e1;
+            font-size: 14px;
+            border: 1px solid #4c1d95;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover:not(.disabled) {
+            background: #4c1d95;
+            color: #d8b4fe;
+        }
+
+        .calendar-day.other-month {
+            color: #64748b;
+        }
+
+        .calendar-day.selected {
+            background: #c084fc;
+            color: #ffffff;
+            border-color: #c084fc;
+            font-weight: 600;
+        }
+
+        .calendar-day.in-range {
+            background: #8b5cf6;
+            color: #ffffff;
+            border-color: #8b5cf6;
+        }
+
+        .calendar-day.disabled {
+            color: #475569;
+            cursor: not-allowed;
+        }
+
+        .calendar-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .calendar-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-confirm {
+            background: #10b981;
+            color: white;
+        }
+
+        .calendar-confirm:hover {
+            background: #059669;
+        }
+
+        .calendar-cancel {
+            background: #ef4444;
+            color: white;
+        }
+
+        .calendar-cancel:hover {
+            background: #dc2626;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 18% 22%, rgba(192, 132, 252, 0.22) 0%, rgba(192, 132, 252, 0) 34%),
+                radial-gradient(circle at 82% 78%, rgba(109, 40, 217, 0.28) 0%, rgba(109, 40, 217, 0) 38%),
+                radial-gradient(circle at 52% 50%, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0) 55%),
+                linear-gradient(135deg, #0a0614 0%, #0f0a1a 45%, #1a0b2e 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .auth-overlay::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(to top, rgba(192, 132, 252, 0.1) 1px, transparent 1px) 0 0 / 100% 52px,
+                linear-gradient(to right, rgba(192, 132, 252, 0.07) 1px, transparent 1px) 0 0 / 52px 100%,
+                linear-gradient(110deg,
+                    transparent 0 10%,
+                    rgba(192, 132, 252, 0.12) 10% 14%,
+                    transparent 14% 28%,
+                    rgba(139, 92, 246, 0.1) 28% 33%,
+                    transparent 33% 48%,
+                    rgba(216, 180, 254, 0.1) 48% 52%,
+                    transparent 52% 100%);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .auth-overlay.active {
+            display: flex;
+        }
+
+        .auth-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            background: linear-gradient(135deg, rgba(18,9,36,0.98) 0%, rgba(45,27,105,0.96) 100%);
+            border: 1px solid rgba(196, 132, 252, 0.35);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(192, 132, 252, 0.2);
+        }
+
+        .auth-card h2 {
+            margin-bottom: 10px;
+            color: #e9d5ff;
+        }
+
+        .auth-card p {
+            margin-bottom: 18px;
+            color: #c4b5fd;
+            font-size: 14px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-register-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f0a1a;
+            border: 2px solid #4c1d95;
+            border-radius: 8px;
+            color: #e2e8f0;
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: #c084fc;
+        }
+
+        .auth-hidden {
+            display: none;
+        }
+
+        .auth-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .auth-message {
+            min-height: 20px;
+            font-size: 13px;
+            margin-top: 8px;
+            color: #fca5a5;
+        }
+
+        .auth-message.success {
+            color: #86efac;
+        }
+
+        .user-badge {
+            margin: 0 20px 18px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(124, 58, 237, 0.16);
+            border: 1px solid rgba(192, 132, 252, 0.35);
+            color: #ddd6fe;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .logout-btn {
+            margin: 0;
+            width: 100%;
+            justify-content: center;
+            font-size: 12px;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 10px 20px 16px;
+        }
+
+        .sidebar-footer .user-badge {
+            margin: 0 0 10px;
+        }
+
+        .permissao-aviso {
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(250, 204, 21, 0.35);
+            color: #fde68a;
+            background: rgba(234, 179, 8, 0.1);
+            font-size: 13px;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid #4c1d95;
+            text-align: left;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .admin-role-chip {
+            min-width: 96px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(196, 132, 252, 0.45);
+            background: #1b1333;
+            color: #ddd6fe;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .admin-role-chip.admin-dirty {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.18);
+        }
+
+        .admin-edit-row td {
+            background: rgba(30, 17, 57, 0.7);
+            border-bottom: 1px solid rgba(196, 132, 252, 0.25);
+        }
+
+        .admin-edit-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .admin-edit-panel input,
+        .admin-edit-panel select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #5b21b6;
+            background: #0f0a1a;
+            color: #e2e8f0;
+            font-size: 13px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: #a78bfa;
+            margin-top: -2px;
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .icon-approve { background: #065f46; color: #a7f3d0; }
+        .icon-reject { background: #7f1d1d; color: #fecaca; }
+        .icon-edit { background: #312e81; color: #c7d2fe; }
+        .icon-view { background: #1f2937; color: #d1d5db; }
+
+        .sales-yesterday-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .sales-yesterday-card {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(196, 132, 252, 0.25);
+        }
+
+        .sales-yesterday-card h3 {
+            color: #c4b5fd;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .sales-yesterday-card p {
+            color: #e9d5ff;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .sales-ecommerce-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .sales-ecommerce-card {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            border: 1px solid rgba(196, 132, 252, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .sales-ecommerce-card h4 {
+            color: #ddd6fe;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .sales-ecommerce-card .sales-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            color: #c4b5fd;
+            font-size: 14px;
+        }
+
+        .sales-totals-footer {
+            border-top: 1px solid rgba(196, 132, 252, 0.25);
+            padding-top: 12px;
+            color: #a78bfa;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-card">
+            <h2 id="authTitle">Entrar</h2>
+            <p id="authSubtitle">Use usuário ou e-mail e senha para entrar.</p>
+            <form id="authForm" class="auth-form">
+                <input type="text" id="authIdentifier" placeholder="Usuário ou e-mail" autocomplete="username" required>
+                <div id="authRegisterFields" class="auth-register-fields auth-hidden">
+                    <input type="text" id="authUsername" placeholder="Nome de usuário" minlength="3" maxlength="32" autocomplete="username">
+                    <input type="email" id="authEmail" placeholder="E-mail para login" autocomplete="email">
+                </div>
+                <input type="password" id="authPassword" placeholder="Senha" minlength="8" autocomplete="current-password" required>
+                <input type="password" id="authConfirmPassword" class="auth-hidden" placeholder="Confirmar senha" minlength="8" autocomplete="new-password">
+                <div class="auth-actions">
+                    <button type="button" class="btn btn-primary" id="authPrimaryBtn" onclick="acaoAuthPrimaria()">Entrar</button>
+                    <button type="button" class="btn btn-secondary" id="authSecondaryBtn" onclick="acaoAuthSecundaria()">Cadastrar</button>
+                </div>
+                <div id="authMessage" class="auth-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CALENDÁRIO MODAL PARA SELECIONAR INTERVALO DE DATAS -->
+    <div id="calendarModal" class="calendar-modal">
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button onclick="calendarioMesAnterior()">◀</button>
+                <h3 id="calendarTitle">Janeiro 2026</h3>
+                <button onclick="calendarioProximoMes()">▶</button>
+            </div>
+            <div class="calendar-weekdays">
+                <div class="calendar-weekday">Dom</div>
+                <div class="calendar-weekday">Seg</div>
+                <div class="calendar-weekday">Ter</div>
+                <div class="calendar-weekday">Qua</div>
+                <div class="calendar-weekday">Qui</div>
+                <div class="calendar-weekday">Sex</div>
+                <div class="calendar-weekday">Sab</div>
+            </div>
+            <div id="calendarDays" class="calendar-days"></div>
+            <div class="calendar-actions">
+                <button class="calendar-confirm" onclick="confirmarDataRange()">✓ Confirmar</button>
+                <button class="calendar-cancel" onclick="fecharCalendario()">✕ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>📊 Hub de Vendas</h1>
+            </div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item" id="navSalesItem" style="display: none;">
+                        <a class="nav-link" onclick="switchPage(event, 'sales')">🧾 Vendas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="switchPage(event, 'dashboard')">📈 Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage(event, 'database')">💾 Banco de Dados</a>
+                    </li>
+                    <li class="nav-item" id="navAdminItem" style="display: none;">
+                        <a class="nav-link" onclick="switchPage(event, 'adminUsers')">👤 Administração</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-badge" id="userBadge">Não autenticado</div>
+                <button class="btn btn-danger logout-btn" onclick="logout()">Sair</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div id="dashboard" class="page active">
+                <div class="page-header">
+                    <h1>Painel de Vendas</h1>
+                </div>
+
+                <div class="filters-container">
+                    <div class="filters-row">
+                        <div class="filter-group" style="grid-column: span 2;">
+                            <label>Selecione o Período</label>
+                            <div class="date-range-display" onclick="abrirCalendarioDashboard()">
+                                <span class="date-range-display-text" id="dashboardDateRangeText">📅 Clique para selecionar...</span>
+                                <input type="date" id="filterDataInicio" style="display: none;">
+                                <input type="date" id="filterDataFim" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Selecione os Ecommerces</label>
+                            <select id="filterEcommerces" multiple size="4"></select>
+                        </div>
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="btn btn-primary" onclick="aplicarFiltros()">🔍 Aplicar Filtros</button>
+                        <button class="btn btn-secondary" onclick="limparFiltros()">🔄 Limpar Filtros</button>
+                    </div>
+                </div>
+
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-label">Total de Vendas</div>
+                        <div class="metric-value" id="totalVendas">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Receita Total</div>
+                        <div class="metric-value" id="receitaTotal">R$ 0,00</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <div class="chart-title">Receita por Mês</div>
+                        <canvas id="chartRevenueMonth"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">Receita por Dia</div>
+                        <canvas id="chartRevenueDay"></canvas>
+                    </div>
+                </div>
+
+                <div class="comparison-filters">
+                    <h2 style="color: #60a5fa; margin-bottom: 20px;">Comparativo entre Ecommerces</h2>
+                    <div class="comparison-row">
+                        <div class="comparison-group">
+                            <h3>Ecommerce 1</h3>
+                            <div class="comparison-filters-inner">
+                                <div class="filter-group">
+                                    <label>Ecommerce</label>
+                                    <select id="comp1Ecommerce"></select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Mês</label>
+                                    <div class="month-picker-wrapper" onclick="abrirSeletorMes('comp1Month')">
+                                        <input type="month" id="comp1Month">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comparison-group">
+                            <h3>Ecommerce 2</h3>
+                            <div class="comparison-filters-inner">
+                                <div class="filter-group">
+                                    <label>Ecommerce</label>
+                                    <select id="comp2Ecommerce"></select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Mês</label>
+                                    <div class="month-picker-wrapper" onclick="abrirSeletorMes('comp2Month')">
+                                        <input type="month" id="comp2Month">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="gerarComparativo()" style="margin-top: 15px;">📊 Gerar Comparativo</button>
+                </div>
+
+                <div class="table-container" id="comparisonTableContainer" style="display: none;">
+                    <h2 style="color: #60a5fa; margin-bottom: 20px;">Resultado da Comparação</h2>
+                    <table id="comparisonTable">
+                        <thead>
+                            <tr>
+                                <th id="thDataComparacao">Dia do Mês</th>
+                                <th id="th1">Vendas - Ecommerce 1</th>
+                                <th id="th2">Receita - Ecommerce 1</th>
+                                <th id="th3">Vendas - Ecommerce 2</th>
+                                <th id="th4">Receita - Ecommerce 2</th>
+                                <th>Diferença Vendas</th>
+                                <th>Diferença Receita</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="database" class="page">
+                <div class="page-header">
+                    <h1>Banco de Dados</h1>
+                </div>
+
+                <div class="upload-section">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Importar Arquivo Excel</h3>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" accept=".xlsx,.xls">
+                        <label for="fileInput" class="file-input-label">📁 Selecionar Arquivo Excel</label>
+                    </div>
+                    <div class="file-name" id="fileName"></div>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button class="btn btn-primary" id="importBtn" onclick="handleFileUpload()" style="display: none;">📤 Importar Arquivo</button>
+                        <button class="btn btn-success" onclick="exportarDados()">💾 Exportar Dados para Excel</button>
+                    </div>
+                </div>
+
+                <div class="form-container">
+                    <h3 style="color: #60a5fa; margin-bottom: 20px;">Adicionar Nova Venda</h3>
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="formData" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ecommerce</label>
+                        <select id="formEcommerce" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade de Vendas</label>
+                        <input type="number" id="formVendas" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Receita (R$)</label>
+                        <input type="number" id="formReceita" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-buttons">
+                        <button class="btn btn-primary" onclick="adicionarVenda()">➕ Adicionar Venda</button>
+                        <button class="btn btn-secondary" onclick="limparFormulario()">🔄 Limpar Formulário</button>
+                    </div>
+                </div>
+
+                <div class="filters-container">
+                    <div class="filters-row">
+                        <div class="filter-group" style="grid-column: span 2;">
+                            <label>Selecione o Período</label>
+                            <div class="date-range-display" onclick="abrirCalendarioBancoDados()">
+                                <span class="date-range-display-text" id="bdDateRangeText">📅 Clique para selecionar...</span>
+                                <input type="date" id="dbFilterData" style="display: none;">
+                                <input type="date" id="dbFilterDataInicio" style="display: none;">
+                                <input type="date" id="dbFilterDataFim" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Ecommerce</label>
+                            <select id="dbFilterEcommerce">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="btn btn-primary" onclick="aplicarFiltrosDB()">🔍 Aplicar Filtros</button>
+                        <button class="btn btn-secondary" onclick="limparFiltrosDB()">🔄 Limpar Filtros</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #60a5fa; margin: 0;">Histórico de Vendas</h3>
+                        <button class="btn btn-danger" id="deletarSelecionadosBtn" onclick="deletarSelecionados()" style="display: none;">🗑️ Deletar Selecionados</button>
+                    </div>
+                    <table id="datasTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
+                                </th>
+                                <th>Data</th>
+                                <th>Ecommerce</th>
+                                <th>Vendas</th>
+                                <th>Receita</th>
+                                <th style="width: 80px;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="datasTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="sales" class="page">
+                <div class="page-header">
+                    <h1>Página Vendas</h1>
+                </div>
+
+                <div class="filters-container">
+                    <div id="salesReference" style="color:#c4b5fd; margin-bottom: 16px;">Data de referência: -</div>
+                    <div id="salesEcommerceCards" class="sales-ecommerce-grid"></div>
+                    <div class="sales-totals-footer">
+                        <div>Total geral (ontem): <strong id="salesYesterdayTotalVendas">0</strong> vendas</div>
+                        <div>Receita geral (ontem): <strong id="salesYesterdayTotalReceita">R$ 0,00</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminUsers" class="page">
+                <div class="page-header">
+                    <h1>Administração de Usuários</h1>
+                </div>
+
+                <div class="filters-container">
+                    <div class="permissao-aviso">Apenas administradores podem aprovar cadastros, alterar perfil e redefinir senha.</div>
+                    <div class="filter-buttons" style="margin-bottom: 12px;">
+                        <button class="btn btn-primary" onclick="carregarUsuariosAdmin()">🔄 Atualizar Lista</button>
+                    </div>
+                    <div class="table-container" style="margin-bottom: 0;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>E-mail</th>
+                                    <th>Usuário</th>
+                                    <th>Data de Cadastro</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="filter-buttons" style="margin-top: 14px; justify-content: flex-end;">
+                        <button class="btn btn-success" id="saveAdminChangesBtn" style="display:none;" onclick="salvarAlteracoesUsuariosAdmin()">💾 Salvar alterações</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let vendas = [];
+        const API_BASE = '/api';
+        let authToken = localStorage.getItem('authToken') || '';
+        let authUser = null;
+        let authMode = 'login';
+        let adminUsersCache = [];
+        const adminEditingUsers = new Set();
+        const adminDraftChanges = new Map();
+
+        function definirMensagemAuth(texto, sucesso = false) {
+            const el = document.getElementById('authMessage');
+            el.textContent = texto || '';
+            el.classList.toggle('success', !!sucesso);
+        }
+
+        function mostrarAuthOverlay(mostrar) {
+            document.getElementById('authOverlay').classList.toggle('active', mostrar);
+            document.body.classList.toggle('auth-locked', !!mostrar);
+        }
+
+        function paginaPadraoPorPerfil() {
+            if (ehViewer()) return 'sales';
+            return 'dashboard';
+        }
+
+        function paginaPermitida(page) {
+            const perfil = perfilAtual();
+            if (perfil === 'admin') return ['dashboard', 'database', 'sales', 'adminUsers'].includes(page);
+            if (perfil === 'user') return ['dashboard', 'database', 'sales'].includes(page);
+            if (perfil === 'viewer') return ['sales'].includes(page);
+            return ['dashboard'].includes(page);
+        }
+
+        function navegarParaPagina(page) {
+            document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach((l) => l.classList.remove('active'));
+
+            const pageElement = document.getElementById(page);
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+
+            const navLink = document.querySelector(`.nav-link[onclick="switchPage(event, '${page}')"]`);
+            if (navLink) {
+                navLink.classList.add('active');
+            }
+        }
+
+        function setAuthMode(mode) {
+            const previousMode = authMode;
+            authMode = mode === 'register' ? 'register' : 'login';
+
+            const title = document.getElementById('authTitle');
+            const subtitle = document.getElementById('authSubtitle');
+            const registerFields = document.getElementById('authRegisterFields');
+            const identifier = document.getElementById('authIdentifier');
+            const email = document.getElementById('authEmail');
+            const username = document.getElementById('authUsername');
+            const confirmPassword = document.getElementById('authConfirmPassword');
+            const password = document.getElementById('authPassword');
+            const primaryBtn = document.getElementById('authPrimaryBtn');
+            const secondaryBtn = document.getElementById('authSecondaryBtn');
+
+            if (authMode === 'register') {
+                title.textContent = 'Cadastro';
+                subtitle.textContent = 'Preencha nome de usuário, e-mail, senha e confirmação de senha.';
+                registerFields.classList.remove('auth-hidden');
+                identifier.classList.add('auth-hidden');
+                confirmPassword.classList.remove('auth-hidden');
+                identifier.required = false;
+                username.required = true;
+                email.required = true;
+                confirmPassword.required = true;
+                password.autocomplete = 'new-password';
+                primaryBtn.textContent = 'Voltar';
+                secondaryBtn.textContent = 'Cadastrar';
+
+                if (previousMode !== 'register') {
+                    // Limpar campos apenas na transicao para cadastro.
+                    identifier.value = '';
+                    username.value = '';
+                    email.value = '';
+                    password.value = '';
+                    confirmPassword.value = '';
+                }
+            } else {
+                title.textContent = 'Entrar';
+                subtitle.textContent = 'Use usuário ou e-mail e senha para entrar.';
+                registerFields.classList.add('auth-hidden');
+                identifier.classList.remove('auth-hidden');
+                confirmPassword.classList.add('auth-hidden');
+                identifier.required = true;
+                username.required = false;
+                email.required = false;
+                confirmPassword.required = false;
+                password.autocomplete = 'current-password';
+                primaryBtn.textContent = 'Entrar';
+                secondaryBtn.textContent = 'Cadastrar';
+            }
+        }
+
+        async function acaoAuthPrimaria() {
+            if (authMode === 'register') {
+                setAuthMode('login');
+                definirMensagemAuth('');
+                return;
+            }
+
+            await fazerLogin();
+        }
+
+        async function acaoAuthSecundaria() {
+            if (authMode !== 'register') {
+                setAuthMode('register');
+                definirMensagemAuth('Modo cadastro ativado. Preencha os 4 campos para continuar.');
+                return;
+            }
+
+            await fazerCadastro();
+        }
+
+        function atualizarUserBadge() {
+            const badge = document.getElementById('userBadge');
+            if (authUser && authUser.username) {
+                badge.textContent = `Usuário: ${authUser.username} (${authUser.role || 'sem perfil'})`;
+            } else if (authUser && authUser.email) {
+                badge.textContent = `Usuário: ${authUser.email}`;
+            } else {
+                badge.textContent = 'Não autenticado';
+            }
+        }
+
+        function perfilAtual() {
+            return String(authUser?.role || '').toLowerCase();
+        }
+
+        function podeEscreverDados() {
+            return perfilAtual() === 'admin';
+        }
+
+        function ehAdmin() {
+            return perfilAtual() === 'admin';
+        }
+
+        function ehViewer() {
+            return perfilAtual() === 'viewer';
+        }
+
+        function aplicarPermissoesUI() {
+            const navSales = document.getElementById('navSalesItem');
+            const navAdmin = document.getElementById('navAdminItem');
+            const navDashboard = document.querySelector("a[onclick=\"switchPage(event, 'dashboard')\"]")?.closest('.nav-item');
+            const navDatabase = document.querySelector("a[onclick=\"switchPage(event, 'database')\"]")?.closest('.nav-item');
+
+            if (navSales) navSales.style.display = (ehViewer() || perfilAtual() === 'user' || ehAdmin()) ? 'block' : 'none';
+            if (navAdmin) navAdmin.style.display = ehAdmin() ? 'block' : 'none';
+
+            if (navDashboard) navDashboard.style.display = ehViewer() ? 'none' : 'block';
+            if (navDatabase) navDatabase.style.display = ehViewer() ? 'none' : 'block';
+
+            const uploadSection = document.querySelector('#database .upload-section');
+            const formContainer = document.querySelector('#database .form-container');
+            const deletarSelecionadosBtn = document.getElementById('deletarSelecionadosBtn');
+
+            const somenteLeitura = perfilAtual() === 'user';
+            if (uploadSection) uploadSection.style.display = somenteLeitura ? 'none' : 'block';
+            if (formContainer) formContainer.style.display = somenteLeitura ? 'none' : 'block';
+            if (deletarSelecionadosBtn && somenteLeitura) deletarSelecionadosBtn.style.display = 'none';
+
+            const paginaAtual = document.querySelector('.page.active')?.id || '';
+            if (!paginaPermitida(paginaAtual)) {
+                navegarParaPagina(paginaPadraoPorPerfil());
+            }
+        }
+
+        async function apiFetch(path, options = {}) {
+            const headers = {
+                ...(options.headers || {})
+            };
+
+            if (authToken) {
+                headers.Authorization = `Bearer ${authToken}`;
+            }
+
+            const response = await fetch(path, {
+                ...options,
+                headers
+            });
+
+            if (response.status === 401) {
+                logout(true);
+            }
+
+            return response;
+        }
+
+        async function validarSessao() {
+            if (!authToken) {
+                mostrarAuthOverlay(true);
+                atualizarUserBadge();
+                return false;
+            }
+
+            try {
+                const response = await apiFetch(`${API_BASE}/auth/me`);
+                if (!response.ok) {
+                    mostrarAuthOverlay(true);
+                    atualizarUserBadge();
+                    return false;
+                }
+
+                const data = await response.json();
+                authUser = data.user;
+                atualizarUserBadge();
+                mostrarAuthOverlay(false);
+                aplicarPermissoesUI();
+                return true;
+            } catch (error) {
+                mostrarAuthOverlay(true);
+                atualizarUserBadge();
+                return false;
+            }
+        }
+
+        async function fazerLogin() {
+            setAuthMode('login');
+            definirMensagemAuth('');
+            const identifier = document.getElementById('authIdentifier').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!identifier || !password) {
+                definirMensagemAuth('Preencha usuário ou e-mail e senha.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    definirMensagemAuth(result.erro || 'Falha no login.');
+                    return;
+                }
+
+                authToken = result.token;
+                authUser = result.user;
+                localStorage.setItem('authToken', authToken);
+                atualizarUserBadge();
+                mostrarAuthOverlay(false);
+                aplicarPermissoesUI();
+                definirMensagemAuth('');
+                await carregarDadosComPermissao();
+            } catch (error) {
+                definirMensagemAuth('Erro ao conectar no servidor.');
+            }
+        }
+
+        async function fazerCadastro() {
+            setAuthMode('register');
+            definirMensagemAuth('');
+            const username = document.getElementById('authUsername').value.trim();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const confirmPassword = document.getElementById('authConfirmPassword').value;
+
+            if (!username || !email || !password || !confirmPassword) {
+                definirMensagemAuth('Preencha nome de usuário, e-mail, senha e confirmar senha.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                definirMensagemAuth('As senhas devem ser iguais.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    definirMensagemAuth(result.erro || 'Falha no cadastro.');
+                    return;
+                }
+
+                document.getElementById('authUsername').value = '';
+                document.getElementById('authEmail').value = '';
+                document.getElementById('authPassword').value = '';
+                document.getElementById('authConfirmPassword').value = '';
+                document.getElementById('authIdentifier').value = '';
+
+                setAuthMode('login');
+                definirMensagemAuth('Cadastro enviado com sucesso. Faça login com usuário ou e-mail e senha.', true);
+            } catch (error) {
+                definirMensagemAuth('Erro ao conectar no servidor.');
+            }
+        }
+
+        function logout(forcado = false) {
+            authToken = '';
+            authUser = null;
+            localStorage.removeItem('authToken');
+            atualizarUserBadge();
+            mostrarAuthOverlay(true);
+            aplicarPermissoesUI();
+            vendas = [];
+            setAuthMode('login');
+            navegarParaPagina('dashboard');
+            if (!forcado) {
+                definirMensagemAuth('Sessão encerrada.', true);
+            } else {
+                definirMensagemAuth('Sessão expirada. Faça login novamente.');
+            }
+        }
+
+        function normalizarChave(chave) {
+            return String(chave || '')
+                .trim()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        function obterValorCampo(obj, aliasesNormalizados) {
+            if (!obj || typeof obj !== 'object') return '';
+
+            const entradas = Object.entries(obj);
+            for (const [chave, valor] of entradas) {
+                const chaveNormalizada = normalizarChave(chave);
+                if (aliasesNormalizados.includes(chaveNormalizada)) {
+                    return valor;
+                }
+            }
+
+            return '';
+        }
+
+        function parseNumero(valor) {
+            if (typeof valor === 'number') return valor;
+            const bruto = String(valor || '').trim();
+            if (!bruto) return 0;
+
+            // Suporta formatos como 1.234,56 e 1234.56
+            const normalizado = bruto.includes(',')
+                ? bruto.replace(/\./g, '').replace(',', '.')
+                : bruto;
+
+            const numero = parseFloat(normalizado);
+            return Number.isFinite(numero) ? numero : 0;
+        }
+
+        function escaparHtml(valor) {
+            return String(valor || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function carregarDados() {
+            try {
+                if (ehViewer()) {
+                    await carregarPaginaVendasOntem();
+                    return;
+                }
+
+                const response = await apiFetch(`${API_BASE}/dados`);
+                if (response.ok) {
+                    const dados = await response.json();
+                    
+                    vendas = dados.map(d => ({
+                        data: String(obterValorCampo(d, ['data']) || '').trim(),
+                        ecommerce: String(obterValorCampo(d, ['ecommerce']) || '').trim(),
+                        vendas: parseInt(parseNumero(obterValorCampo(d, ['vendas', 'quantidade'])), 10) || 0,
+                        receita: parseNumero(obterValorCampo(d, ['receita']))
+                    })).filter(v => v.data && v.ecommerce);
+
+                    // Sempre preencher os e-commerces primeiro para nao depender de grafico/tabela.
+                    atualizarEcommercesDisponiveis();
+
+                    try {
+                        atualizarTabelaDados();
+                    } catch (errorTabela) {
+                        console.error('Erro ao atualizar tabela:', errorTabela);
+                    }
+
+                    try {
+                        atualizarDashboard();
+                    } catch (errorDashboard) {
+                        console.error('Erro ao atualizar dashboard:', errorDashboard);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+        }
+
+        async function carregarDadosComPermissao() {
+            if (ehViewer()) {
+                await carregarPaginaVendasOntem();
+                return;
+            }
+
+            await carregarDados();
+
+            if (ehAdmin()) {
+                await carregarUsuariosAdmin();
+            }
+        }
+
+        async function carregarPaginaVendasOntem() {
+            try {
+                const response = await apiFetch(`${API_BASE}/vendas-dia-anterior`);
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                document.getElementById('salesReference').textContent = `Data de referência: ${formatarData(data.dataReferencia)}`;
+                document.getElementById('salesYesterdayTotalVendas').textContent = data.totalVendas || 0;
+                document.getElementById('salesYesterdayTotalReceita').textContent = `R$ ${(Number(data.totalReceita) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+                const cardsContainer = document.getElementById('salesEcommerceCards');
+                cardsContainer.innerHTML = '';
+
+                if (!data.itens || data.itens.length === 0) {
+                    cardsContainer.innerHTML = '<div class="sales-ecommerce-card"><h4>Sem dados</h4><div class="sales-line"><span>Vendas</span><strong>0</strong></div><div class="sales-line"><span>Receita</span><strong>R$ 0,00</strong></div></div>';
+                    return;
+                }
+
+                const itensOrdenados = [...data.itens].sort((a, b) => {
+                    const vendasA = Number(a.vendas) || 0;
+                    const vendasB = Number(b.vendas) || 0;
+                    if (vendasB !== vendasA) return vendasB - vendasA;
+
+                    const receitaA = Number(a.receita) || 0;
+                    const receitaB = Number(b.receita) || 0;
+                    return receitaB - receitaA;
+                });
+
+                itensOrdenados.forEach((item) => {
+                    const card = document.createElement('div');
+                    card.className = 'sales-ecommerce-card';
+                    card.innerHTML = `
+                        <h4>${item.ecommerce}</h4>
+                        <div class="sales-line"><span>Vendas</span><strong>${item.vendas}</strong></div>
+                        <div class="sales-line"><span>Receita</span><strong>R$ ${(Number(item.receita) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                    `;
+                    cardsContainer.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar página de vendas:', error);
+            }
+        }
+
+        async function carregarUsuariosAdmin() {
+            if (!ehAdmin()) return;
+
+            try {
+                const response = await apiFetch(`${API_BASE}/admin/users`);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                adminUsersCache = Array.isArray(data.users) ? data.users : [];
+                renderizarTabelaUsuariosAdmin();
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+            }
+        }
+
+        function obterUsuarioBaseAdmin(userId) {
+            return adminUsersCache.find((u) => Number(u.id) === Number(userId)) || null;
+        }
+
+        function obterDraftAdmin(userId) {
+            if (!adminDraftChanges.has(userId)) {
+                adminDraftChanges.set(userId, {});
+            }
+            return adminDraftChanges.get(userId);
+        }
+
+        function obterValorEfetivoAdmin(user, campo) {
+            const draft = adminDraftChanges.get(Number(user.id)) || {};
+            if (Object.prototype.hasOwnProperty.call(draft, campo)) {
+                return draft[campo];
+            }
+            return user[campo];
+        }
+
+        function possuiMudancaAdmin(userId) {
+            const user = obterUsuarioBaseAdmin(userId);
+            if (!user) return false;
+
+            const draft = adminDraftChanges.get(Number(userId));
+            if (!draft) return false;
+
+            const username = Object.prototype.hasOwnProperty.call(draft, 'username') ? String(draft.username || '').trim() : String(user.username || '').trim();
+            const email = Object.prototype.hasOwnProperty.call(draft, 'email') ? String(draft.email || '').trim() : String(user.email || '').trim();
+            const role = Object.prototype.hasOwnProperty.call(draft, 'role') ? String(draft.role || '').trim().toLowerCase() : String(user.role || '').trim().toLowerCase();
+            const status = Object.prototype.hasOwnProperty.call(draft, 'status') ? String(draft.status || '').trim().toLowerCase() : String(user.status || '').trim().toLowerCase();
+            const password = Object.prototype.hasOwnProperty.call(draft, 'password') ? String(draft.password || '') : '';
+
+            if (password.trim().length > 0) return true;
+            if (username !== String(user.username || '').trim()) return true;
+            if (email !== String(user.email || '').trim()) return true;
+            if (role !== String(user.role || '').trim().toLowerCase()) return true;
+            if (status !== String(user.status || '').trim().toLowerCase()) return true;
+            return false;
+        }
+
+        function atualizarVisibilidadeBotaoSalvarAdmin() {
+            const btn = document.getElementById('saveAdminChangesBtn');
+            const temMudancas = adminUsersCache.some((u) => possuiMudancaAdmin(Number(u.id)));
+            btn.style.display = temMudancas ? 'inline-flex' : 'none';
+        }
+
+        function atualizarCampoDraftAdmin(userId, campo, valor) {
+            const id = Number(userId);
+            const draft = obterDraftAdmin(id);
+            draft[campo] = valor;
+            adminDraftChanges.set(id, draft);
+            atualizarVisibilidadeBotaoSalvarAdmin();
+        }
+
+        function alternarEdicaoUsuarioAdmin(userId) {
+            const id = Number(userId);
+            if (!Number.isFinite(id) || id <= 0) return;
+
+            if (adminEditingUsers.has(id)) {
+                adminEditingUsers.delete(id);
+            } else {
+                adminEditingUsers.add(id);
+            }
+
+            renderizarTabelaUsuariosAdmin();
+        }
+
+        function renderizarTabelaUsuariosAdmin() {
+            const tbody = document.getElementById('adminUsersTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            adminUsersCache.forEach((user) => {
+                const userId = Number(user.id);
+                if (!Number.isFinite(userId) || userId <= 0) return;
+
+                const dataCadastro = user.created_at ? String(user.created_at).replace('T', ' ').slice(0, 19) : '-';
+                const roleAtual = String(obterValorEfetivoAdmin(user, 'role') || 'viewer').toLowerCase();
+                const statusAtual = String(obterValorEfetivoAdmin(user, 'status') || 'pending').toLowerCase();
+                const emEdicao = adminEditingUsers.has(userId);
+                const possuiMudanca = possuiMudancaAdmin(userId);
+                const emailVisivel = escaparHtml(obterValorEfetivoAdmin(user, 'email'));
+                const usernameVisivel = escaparHtml(obterValorEfetivoAdmin(user, 'username'));
+
+                const acoesAprovacao = user.status === 'pending'
+                    ? `
+                        <button class="icon-btn icon-approve" title="Aceitar cadastro" onclick="aprovarUsuario(${userId})">✅</button>
+                        <button class="icon-btn icon-reject" title="Recusar cadastro" onclick="recusarUsuario(${userId})">❌</button>
+                      `
+                    : '';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${emailVisivel}</td>
+                    <td>${usernameVisivel}</td>
+                    <td>${dataCadastro}</td>
+                    <td>
+                        <div class="admin-actions">
+                            ${acoesAprovacao}
+                            <select class="admin-role-chip ${possuiMudanca ? 'admin-dirty' : ''}" title="Tipo de usuário" onchange="atualizarCampoDraftAdmin(${userId}, 'role', this.value)">
+                                <option value="admin" ${roleAtual === 'admin' ? 'selected' : ''}>admin</option>
+                                <option value="user" ${roleAtual === 'user' ? 'selected' : ''}>user</option>
+                                <option value="viewer" ${roleAtual === 'viewer' ? 'selected' : ''}>viewer</option>
+                            </select>
+                            <button class="icon-btn icon-edit" title="Editar cadastro" onclick="alternarEdicaoUsuarioAdmin(${userId})">✏️</button>
+                            <button class="icon-btn icon-view" title="Ver detalhes" onclick="verDetalhesUsuario(${userId})">👁️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                if (emEdicao) {
+                    const username = escaparHtml(String(obterValorEfetivoAdmin(user, 'username') || ''));
+                    const email = escaparHtml(String(obterValorEfetivoAdmin(user, 'email') || ''));
+                    const status = String(statusAtual || 'pending');
+                    const editRow = document.createElement('tr');
+                    editRow.className = 'admin-edit-row';
+                    editRow.innerHTML = `
+                        <td colspan="4">
+                            <div class="admin-edit-panel">
+                                <input type="text" placeholder="Nome de usuário" value="${username}" oninput="atualizarCampoDraftAdmin(${userId}, 'username', this.value)">
+                                <input type="email" placeholder="E-mail" value="${email}" oninput="atualizarCampoDraftAdmin(${userId}, 'email', this.value)">
+                                <input type="password" placeholder="Nova senha (opcional)" oninput="atualizarCampoDraftAdmin(${userId}, 'password', this.value)">
+                                <select onchange="atualizarCampoDraftAdmin(${userId}, 'status', this.value)">
+                                    <option value="active" ${status === 'active' ? 'selected' : ''}>active</option>
+                                    <option value="blocked" ${status === 'blocked' ? 'selected' : ''}>blocked</option>
+                                    <option value="pending" ${status === 'pending' ? 'selected' : ''}>pending</option>
+                                </select>
+                            </div>
+                            <div class="field-hint">Edite os campos acima. O perfil também pode ser alterado na caixa ao lado dos ícones.</div>
+                        </td>
+                    `;
+                    tbody.appendChild(editRow);
+                }
+            });
+
+            atualizarVisibilidadeBotaoSalvarAdmin();
+        }
+
+        async function aprovarUsuario(userId) {
+            if (!ehAdmin()) return;
+            const response = await apiFetch(`${API_BASE}/admin/users/${userId}/approve`, {
+                method: 'PATCH'
+            });
+
+            if (!response.ok) {
+                alert('Não foi possível aprovar o cadastro');
+                return;
+            }
+
+            await carregarUsuariosAdmin();
+        }
+
+        async function recusarUsuario(userId) {
+            if (!ehAdmin()) return;
+
+            const confirmou = confirm('Deseja recusar este cadastro?');
+            if (!confirmou) return;
+
+            const response = await apiFetch(`${API_BASE}/admin/users/${userId}/reject`, {
+                method: 'PATCH'
+            });
+
+            if (!response.ok) {
+                alert('Não foi possível recusar o cadastro');
+                return;
+            }
+
+            await carregarUsuariosAdmin();
+        }
+
+        async function verDetalhesUsuario(userId) {
+            if (!ehAdmin()) return;
+
+            const response = await apiFetch(`${API_BASE}/admin/users/${userId}`);
+            if (!response.ok) {
+                alert('Não foi possível carregar detalhes do usuário');
+                return;
+            }
+
+            const data = await response.json();
+            const user = data.user;
+            if (!user) {
+                alert('Usuário não encontrado');
+                return;
+            }
+
+            const dataCadastro = user.created_at ? String(user.created_at).replace('T', ' ').slice(0, 19) : '-';
+            alert(
+                `Detalhes do cadastro\n\n` +
+                `ID: ${user.id}\n` +
+                `Usuário: ${user.username}\n` +
+                `E-mail: ${user.email}\n` +
+                `Perfil: ${user.role}\n` +
+                `Status: ${user.status}\n` +
+                `Data de cadastro: ${dataCadastro}`
+            );
+        }
+
+        async function salvarAlteracoesUsuariosAdmin() {
+            if (!ehAdmin()) return;
+
+            const alteracoesPendentes = adminUsersCache
+                .map((u) => Number(u.id))
+                .filter((id) => possuiMudancaAdmin(id));
+
+            if (alteracoesPendentes.length === 0) {
+                alert('Nenhuma alteração pendente para salvar.');
+                return;
+            }
+
+            for (const userId of alteracoesPendentes) {
+                const user = obterUsuarioBaseAdmin(userId);
+                const draft = adminDraftChanges.get(userId) || {};
+                if (!user) continue;
+
+                const payload = {
+                    username: String(Object.prototype.hasOwnProperty.call(draft, 'username') ? draft.username : user.username || '').trim(),
+                    email: String(Object.prototype.hasOwnProperty.call(draft, 'email') ? draft.email : user.email || '').trim(),
+                    role: String(Object.prototype.hasOwnProperty.call(draft, 'role') ? draft.role : user.role || '').trim().toLowerCase(),
+                    status: String(Object.prototype.hasOwnProperty.call(draft, 'status') ? draft.status : user.status || '').trim().toLowerCase()
+                };
+
+                const updateResponse = await apiFetch(`${API_BASE}/admin/users/${userId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!updateResponse.ok) {
+                    const erro = await updateResponse.json().catch(() => ({}));
+                    alert(`Erro ao salvar usuário ${userId}: ${erro.erro || 'falha na atualização'}`);
+                    return;
+                }
+
+                const novaSenha = String(draft.password || '').trim();
+                if (novaSenha.length > 0) {
+                    const passResponse = await apiFetch(`${API_BASE}/admin/users/${userId}/password`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: novaSenha })
+                    });
+
+                    if (!passResponse.ok) {
+                        const erroSenha = await passResponse.json().catch(() => ({}));
+                        alert(`Erro ao atualizar senha do usuário ${userId}: ${erroSenha.erro || 'falha na senha'}`);
+                        return;
+                    }
+                }
+            }
+
+            adminDraftChanges.clear();
+            adminEditingUsers.clear();
+            await carregarUsuariosAdmin();
+            alert('Alterações salvas com sucesso.');
+        }
+
+        async function alterarPerfilUsuario(userId) {
+            if (!ehAdmin()) return;
+
+            const novoPerfil = prompt('Informe o novo perfil (admin, user, viewer):');
+            if (!novoPerfil) return;
+
+            const response = await apiFetch(`${API_BASE}/admin/users/${userId}/role`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: novoPerfil.trim().toLowerCase() })
+            });
+
+            if (!response.ok) {
+                const erro = await response.json().catch(() => ({}));
+                alert(erro.erro || 'Não foi possível alterar o perfil');
+                return;
+            }
+
+            await carregarUsuariosAdmin();
+        }
+
+        async function redefinirSenhaUsuario(userId) {
+            if (!ehAdmin()) return;
+
+            const novaSenha = prompt('Digite a nova senha (mínimo 8 caracteres):');
+            if (!novaSenha) return;
+
+            const response = await apiFetch(`${API_BASE}/admin/users/${userId}/password`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: novaSenha })
+            });
+
+            if (!response.ok) {
+                const erro = await response.json().catch(() => ({}));
+                alert(erro.erro || 'Não foi possível redefinir a senha');
+                return;
+            }
+
+            alert('Senha atualizada com sucesso');
+        }
+
+        function atualizarEcommercesDisponiveis() {
+            const ecommercesUnicos = [...new Set(
+                vendas
+                    .map(v => (v.ecommerce || '').toString().trim())
+                    .filter(v => v.length > 0)
+            )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            
+            // Atualizar select de filtro do dashboard
+            const filterSelect = document.getElementById('filterEcommerces');
+            const selectedValues = Array.from(filterSelect.selectedOptions).map(o => o.value);
+            
+            filterSelect.innerHTML = '';
+
+            // Se não houver ecommerces cadastrados, reseta para vazio
+            if (ecommercesUnicos.length === 0) {
+                return;
+            }
+            
+            // Verificar se alguma das seleções anteriores ainda existe
+            const valoresExistem = selectedValues.some(val => ecommercesUnicos.includes(val));
+            
+            ecommercesUnicos.forEach(ecommerce => {
+                const option = document.createElement('option');
+                option.value = ecommerce;
+                option.textContent = ecommerce;
+                // Se houver selecao anterior valida, mantem apenas os itens que ainda existem.
+                if (selectedValues.length > 0 && valoresExistem) {
+                    option.selected = selectedValues.includes(ecommerce);
+                }
+                filterSelect.appendChild(option);
+            });
+            
+            // Atualizar select do formulário
+            const formSelect = document.getElementById('formEcommerce');
+            const currentValue = formSelect.value;
+            formSelect.innerHTML = '<option value="">Selecione...</option>';
+            ecommercesUnicos.forEach(ecommerce => {
+                const option = document.createElement('option');
+                option.value = ecommerce;
+                option.textContent = ecommerce;
+                formSelect.appendChild(option);
+            });
+            if (currentValue) formSelect.value = currentValue;
+            
+            // Atualizar select do comparativo 1
+            const comp1Select = document.getElementById('comp1Ecommerce');
+            const comp1Value = comp1Select.value;
+            comp1Select.innerHTML = '';
+            ecommercesUnicos.forEach(ecommerce => {
+                const option = document.createElement('option');
+                option.value = ecommerce;
+                option.textContent = ecommerce;
+                comp1Select.appendChild(option);
+            });
+            if (comp1Value) comp1Select.value = comp1Value;
+            
+            // Atualizar select do comparativo 2
+            const comp2Select = document.getElementById('comp2Ecommerce');
+            const comp2Value = comp2Select.value;
+            comp2Select.innerHTML = '';
+            ecommercesUnicos.forEach(ecommerce => {
+                const option = document.createElement('option');
+                option.value = ecommerce;
+                option.textContent = ecommerce;
+                comp2Select.appendChild(option);
+            });
+            if (comp2Value) comp2Select.value = comp2Value;
+            
+            // Atualizar select do filtro do banco de dados
+            const dbFilterSelect = document.getElementById('dbFilterEcommerce');
+            const dbSelectedValue = dbFilterSelect.value;
+            dbFilterSelect.innerHTML = '<option value="">Todos</option>';
+            ecommercesUnicos.forEach(ecommerce => {
+                const option = document.createElement('option');
+                option.value = ecommerce;
+                option.textContent = ecommerce;
+                dbFilterSelect.appendChild(option);
+            });
+            if (dbSelectedValue) dbFilterSelect.value = dbSelectedValue;
+            console.log('✓ Select do BD atualizado');
+        }
+
+        function abrirSeletorMes(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            input.focus();
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+            }
+        }
+
+        function switchPage(ev, page) {
+            if (ev && typeof ev.preventDefault === 'function') {
+                ev.preventDefault();
+            }
+
+            const destino = paginaPermitida(page) ? page : paginaPadraoPorPerfil();
+            navegarParaPagina(destino);
+        }
+
+        function aplicarFiltros() {
+            atualizarDashboard();
+        }
+
+        function limparFiltros() {
+            document.getElementById('filterDataInicio').value = '';
+            document.getElementById('filterDataFim').value = '';
+            atualizarDashboard();
+        }
+
+        function filtrarDados(filtros = null) {
+            if (!filtros) filtros = getFiltrosAtivos();
+            
+            const resultado = vendas.filter(v => {
+                const dataVenda = v.data;
+                const dataInicio = filtros.dataInicioStr || '';
+                const dataFim = filtros.dataFimStr || '';
+                
+                const temEcommerce = filtros.ecommerces.includes(v.ecommerce);
+                const temDataInicio = !dataInicio || dataVenda >= dataInicio;
+                const temDataFim = !dataFim || dataVenda <= dataFim;
+                
+                return temEcommerce && temDataInicio && temDataFim;
+            });
+            
+            return resultado;
+        }
+
+        function getFiltrosAtivos() {
+            const selectEcommerces = document.getElementById('filterEcommerces');
+            const selected = Array.from(selectEcommerces.selectedOptions).map(o => o.value);
+            let allEcommerces = Array.from(selectEcommerces.options).map(o => o.value);
+
+            if (allEcommerces.length === 0) {
+                // fallback para o conjunto real de vendas, caso o select não esteja populado
+                allEcommerces = [...new Set(vendas.map(v => v.ecommerce))];
+            }
+
+            const dataInicio = document.getElementById('filterDataInicio').value;
+            const dataFim = document.getElementById('filterDataFim').value;
+
+            return {
+                ecommerces: selected.length > 0 ? selected : allEcommerces,
+                dataInicioStr: dataInicio || '',
+                dataFimStr: dataFim || ''
+            };
+        }
+
+
+        function atualizarDashboard() {
+            const dados = filtrarDados();
+            const totalVendas = dados.reduce((sum, v) => sum + v.vendas, 0);
+            const receitaTotal = dados.reduce((sum, v) => sum + v.receita, 0);
+
+            document.getElementById('totalVendas').textContent = totalVendas;
+            document.getElementById('receitaTotal').textContent = `R$ ${receitaTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            atualizarGraficoRevenueMonth(dados);
+            atualizarGraficoRevenueDay(dados);
+        }
+
+        let chartMonth = null;
+        function atualizarGraficoRevenueMonth(dados) {
+            const meses = {};
+            const mesesEcommerce = {};
+
+            dados.forEach(v => {
+                const [ano, mes] = v.data.split('-');
+                const mesAno = `${mes}/${ano}`;
+                if (!meses[mesAno]) {
+                    meses[mesAno] = 0;
+                }
+                if (!mesesEcommerce[v.ecommerce]) {
+                    mesesEcommerce[v.ecommerce] = {};
+                }
+                meses[mesAno] += v.receita;
+                if (!mesesEcommerce[v.ecommerce][mesAno]) {
+                    mesesEcommerce[v.ecommerce][mesAno] = 0;
+                }
+                mesesEcommerce[v.ecommerce][mesAno] += v.receita;
+            });
+
+            const labels = Object.keys(meses).sort();
+            const ecommerces = [...new Set(dados.map(v => v.ecommerce))];
+            
+            // Determinar tipo de gráfico baseado no número de meses
+            const isSingleMonth = labels.length === 1;
+            const chartType = isSingleMonth ? 'bar' : 'line';
+            
+            const datasets = ecommerces.map((ecommerce, index) => {
+                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+                const dataset = {
+                    label: ecommerce,
+                    data: labels.map(mes => mesesEcommerce[ecommerce]?.[mes] || 0),
+                    borderColor: cores[index % cores.length],
+                    backgroundColor: cores[index % cores.length] + (isSingleMonth ? 'cc' : '20'),
+                    borderWidth: isSingleMonth ? 1 : 3,
+                };
+                
+                // Adicionar configurações específicas para linha
+                if (!isSingleMonth) {
+                    dataset.fill = true;
+                    dataset.tension = 0.4;
+                }
+                
+                return dataset;
+            });
+
+            const ctx = document.getElementById('chartRevenueMonth').getContext('2d');
+            if (chartMonth) chartMonth.destroy();
+            chartMonth = new Chart(ctx, {
+                type: chartType,
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#93c5fd' } } },
+                    scales: {
+                        y: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } },
+                        x: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+        }
+
+        let chartDay = null;
+        function atualizarGraficoRevenueDay(dados) {
+            const dias = {};
+            const diasEcommerce = {};
+
+            dados.forEach(v => {
+                if (!dias[v.data]) {
+                    dias[v.data] = 0;
+                }
+                if (!diasEcommerce[v.ecommerce]) {
+                    diasEcommerce[v.ecommerce] = {};
+                }
+                dias[v.data] += v.receita;
+                if (!diasEcommerce[v.ecommerce][v.data]) {
+                    diasEcommerce[v.ecommerce][v.data] = 0;
+                }
+                diasEcommerce[v.ecommerce][v.data] += v.receita;
+            });
+
+            const labels = Object.keys(dias).sort();
+            
+            const ecommerces = [...new Set(dados.map(v => v.ecommerce))];
+            const datasets = ecommerces.map((ecommerce, index) => {
+                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+                return {
+                    label: ecommerce,
+                    data: labels.map(dia => diasEcommerce[ecommerce]?.[dia] || 0),
+                    borderColor: cores[index % cores.length],
+                    backgroundColor: cores[index % cores.length] + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                };
+            });
+
+            const ctx = document.getElementById('chartRevenueDay').getContext('2d');
+            if (chartDay) chartDay.destroy();
+            chartDay = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#93c5fd' } } },
+                    scales: {
+                        y: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } },
+                        x: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+        }
+
+        function gerarComparativo() {
+            const ecom1 = document.getElementById('comp1Ecommerce').value;
+            const mes1 = document.getElementById('comp1Month').value;
+            const ecom2 = document.getElementById('comp2Ecommerce').value;
+            const mes2 = document.getElementById('comp2Month').value;
+
+            if (!ecom1 || !ecom2 || !mes1 || !mes2) {
+                alert('Por favor, selecione e-commerce e mês nos dois lados do comparativo');
+                return;
+            }
+
+            const [ano1, mesNum1] = mes1.split('-');
+            const [ano2, mesNum2] = mes2.split('-');
+
+            const dados1 = vendas.filter(v => v.ecommerce === ecom1 && v.data.startsWith(`${ano1}-${mesNum1}`));
+            const dados2 = vendas.filter(v => v.ecommerce === ecom2 && v.data.startsWith(`${ano2}-${mesNum2}`));
+
+            const agregarPorDia = (lista) => {
+                const mapa = {};
+                lista.forEach(item => {
+                    const partes = String(item.data || '').split('-');
+                    const dia = parseInt(partes[2], 10);
+                    if (!Number.isFinite(dia)) return;
+
+                    if (!mapa[dia]) {
+                        mapa[dia] = { vendas: 0, receita: 0 };
+                    }
+
+                    mapa[dia].vendas += Number(item.vendas) || 0;
+                    mapa[dia].receita += Number(item.receita) || 0;
+                });
+                return mapa;
+            };
+
+            const porDia1 = agregarPorDia(dados1);
+            const porDia2 = agregarPorDia(dados2);
+
+            const diasComparacao = [...new Set([
+                ...Object.keys(porDia1).map(Number),
+                ...Object.keys(porDia2).map(Number)
+            ])].sort((a, b) => a - b);
+
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+
+            if (diasComparacao.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Sem dados para os filtros selecionados.</td></tr>';
+            }
+
+            let totalVendas1 = 0;
+            let totalReceita1 = 0;
+            let totalVendas2 = 0;
+            let totalReceita2 = 0;
+
+            diasComparacao.forEach(dia => {
+                const vendas1 = porDia1[dia]?.vendas || 0;
+                const receita1 = porDia1[dia]?.receita || 0;
+                const vendas2 = porDia2[dia]?.vendas || 0;
+                const receita2 = porDia2[dia]?.receita || 0;
+
+                totalVendas1 += vendas1;
+                totalReceita1 += receita1;
+                totalVendas2 += vendas2;
+                totalReceita2 += receita2;
+
+                const diferencaVendas = vendas2 - vendas1;
+                const diferencaReceita = receita2 - receita1;
+
+                const diaFormatado = String(dia).padStart(2, '0');
+
+                const row = `
+                    <tr>
+                        <td>Dia ${diaFormatado}</td>
+                        <td>${vendas1}</td>
+                        <td>R$ ${receita1.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td>${vendas2}</td>
+                        <td>R$ ${receita2.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td style="color: ${diferencaVendas > 0 ? '#10b981' : diferencaVendas < 0 ? '#ef4444' : '#94a3b8'}">${diferencaVendas > 0 ? '+' : ''}${diferencaVendas}</td>
+                        <td style="color: ${diferencaReceita > 0 ? '#10b981' : diferencaReceita < 0 ? '#ef4444' : '#94a3b8'}">R$ ${diferencaReceita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            const diffTotalVendas = totalVendas2 - totalVendas1;
+            const diffTotalReceita = totalReceita2 - totalReceita1;
+
+            if (diasComparacao.length > 0) {
+                const totalRow = `
+                    <tr style="font-weight:700; background: rgba(96, 165, 250, 0.08); border-top: 2px solid #3b82f6;">
+                        <td>Total</td>
+                        <td>${totalVendas1}</td>
+                        <td>R$ ${totalReceita1.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td>${totalVendas2}</td>
+                        <td>R$ ${totalReceita2.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td style="color: ${diffTotalVendas > 0 ? '#10b981' : diffTotalVendas < 0 ? '#ef4444' : '#94a3b8'}">${diffTotalVendas > 0 ? '+' : ''}${diffTotalVendas}</td>
+                        <td style="color: ${diffTotalReceita > 0 ? '#10b981' : diffTotalReceita < 0 ? '#ef4444' : '#94a3b8'}">R$ ${diffTotalReceita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += totalRow;
+            }
+
+            const tituloLado1 = `${ecom1} (${mesNum1}/${ano1})`;
+            const tituloLado2 = `${ecom2} (${mesNum2}/${ano2})`;
+
+            document.getElementById('thDataComparacao').textContent = 'Dia do Mês';
+            document.getElementById('th1').textContent = `Vendas - ${tituloLado1}`;
+            document.getElementById('th2').textContent = `Receita - ${tituloLado1}`;
+            document.getElementById('th3').textContent = `Vendas - ${tituloLado2}`;
+            document.getElementById('th4').textContent = `Receita - ${tituloLado2}`;
+
+            document.getElementById('comparisonTableContainer').style.display = 'block';
+        }
+
+        async function adicionarVenda() {
+            if (!podeEscreverDados()) {
+                alert('Seu perfil não tem permissão para adicionar vendas.');
+                return;
+            }
+
+            const data = document.getElementById('formData').value;
+            const ecommerce = document.getElementById('formEcommerce').value;
+            const vendas_qtd = parseInt(document.getElementById('formVendas').value);
+            const receita = parseFloat(document.getElementById('formReceita').value);
+
+            if (!data || !ecommerce || !vendas_qtd || !receita) {
+                alert('Por favor, preencha todos os campos');
+                return;
+            }
+
+            try {
+                const response = await apiFetch(`${API_BASE}/dados`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data, ecommerce, vendas: vendas_qtd, receita })
+                });
+
+                if (response.ok) {
+                    alert('Venda adicionada com sucesso!');
+                    limparFormulario();
+                    await carregarDados();
+                }
+            } catch (error) {
+                alert('Erro ao adicionar venda');
+            }
+        }
+
+        function limparFormulario() {
+            document.getElementById('formData').value = '';
+            document.getElementById('formEcommerce').value = '';
+            document.getElementById('formVendas').value = '';
+            document.getElementById('formReceita').value = '';
+        }
+
+        async function deletarVenda(index) {
+            if (!podeEscreverDados()) {
+                alert('Seu perfil não tem permissão para deletar vendas.');
+                return;
+            }
+
+            if (confirm('Tem certeza que deseja deletar essa venda?')) {
+                try {
+                    const response = await apiFetch(`${API_BASE}/dados/${index}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        await carregarDados();
+                    }
+                } catch (error) {
+                    alert('Erro ao deletar venda');
+                }
+            }
+        }
+
+        // Converter formato yyyy-mm-dd para dd/mm/yyyy sem problemas de timezone
+        function formatarData(dataStr) {
+            if (!dataStr) return '';
+            
+            // Converter para string se for número
+            const dataString = String(dataStr).trim();
+            
+            // Se for no formato yyyy-mm-dd
+            if (dataString.includes('-') && /^\d{4}-\d{2}-\d{2}/.test(dataString)) {
+                const [ano, mes, dia] = dataString.split('-');
+                return `${dia}/${mes}/${ano}`;
+            }
+            
+            // Se for no formato dd/mm/yyyy, retorna como está
+            if (dataString.includes('/') && /^\d{2}\/\d{2}\/\d{4}/.test(dataString)) {
+                return dataString;
+            }
+            
+            // Se for um número (timestamp do Excel), tenta converter
+            if (/^\d+(\.\d+)?$/.test(dataString)) {
+                const serial = parseFloat(dataString);
+                // Excel epoch: 1900-01-01 é o serial 1
+                const epochDate = new Date(1900, 0, -1); // 1899-12-31
+                const resultDate = new Date(epochDate.getTime() + serial * 86400000);
+                
+                const dia = String(resultDate.getDate()).padStart(2, '0');
+                const mes = String(resultDate.getMonth() + 1).padStart(2, '0');
+                const ano = resultDate.getFullYear();
+                return `${dia}/${mes}/${ano}`;
+            }
+            
+            return dataString;
+        }
+
+        function atualizarTabelaDados() {
+            const tbody = document.getElementById('datasTableBody');
+            tbody.innerHTML = '';
+
+            const podeEditar = podeEscreverDados();
+            const selectAll = document.getElementById('selectAllCheckbox');
+            const deletarSelecionadosBtn = document.getElementById('deletarSelecionadosBtn');
+            if (selectAll) {
+                selectAll.style.display = podeEditar ? 'inline-block' : 'none';
+                selectAll.checked = false;
+            }
+            if (deletarSelecionadosBtn && !podeEditar) {
+                deletarSelecionadosBtn.style.display = 'none';
+            }
+
+            // Aplicar filtros
+            const dataFiltro = document.getElementById('dbFilterData').value;
+            const dataInicioFiltro = document.getElementById('dbFilterDataInicio').value;
+            const dataFimFiltro = document.getElementById('dbFilterDataFim').value;
+            const ecommerceFiltro = document.getElementById('dbFilterEcommerce').value;
+
+            // Iterar sobre TODOS os vendas e aplicar filtros, mantendo índice original
+            vendas.forEach((v, originalIndex) => {
+                let mostrar = true;
+
+                if (dataFiltro && v.data !== dataFiltro) mostrar = false;
+                if (dataInicioFiltro && v.data < dataInicioFiltro) mostrar = false;
+                if (dataFimFiltro && v.data > dataFimFiltro) mostrar = false;
+                if (ecommerceFiltro && v.ecommerce !== ecommerceFiltro) mostrar = false;
+
+                if (mostrar) {
+                    const checkboxCell = podeEditar
+                        ? `<input type="checkbox" class="row-checkbox" data-index="${originalIndex}">`
+                        : '-';
+                    const acaoCell = podeEditar
+                        ? `<button class="btn-delete" onclick="deletarVenda(${originalIndex})">🗑️</button>`
+                        : '-';
+
+                    const row = `
+                        <tr>
+                            <td style="text-align: center; padding: 15px;">
+                                ${checkboxCell}
+                            </td>
+                            <td>${formatarData(v.data)}</td>
+                            <td>${v.ecommerce}</td>
+                            <td>${v.vendas}</td>
+                            <td>R$ ${v.receita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                            <td>${acaoCell}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                }
+            });
+
+            // Adicionar event listeners aos checkboxes
+            document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', atualizarBotaoDeletar);
+            });
+
+            atualizarBotaoDeletar();
+        }
+
+        function toggleSelectAll(checkbox) {
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            atualizarBotaoDeletar();
+        }
+
+        function atualizarBotaoDeletar() {
+            const selecionados = document.querySelectorAll('.row-checkbox:checked').length;
+            const btn = document.getElementById('deletarSelecionadosBtn');
+            if (selecionados > 0) {
+                btn.style.display = 'block';
+                btn.textContent = `🗑️ Deletar ${selecionados} Selecionado(s)`;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function deletarSelecionados() {
+            if (!podeEscreverDados()) {
+                alert('Seu perfil não tem permissão para deletar vendas.');
+                return;
+            }
+
+            const selecionados = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+                .map(cb => parseInt(cb.dataset.index))
+                .sort((a, b) => b - a);
+
+            if (selecionados.length === 0) {
+                alert('Selecione pelo menos uma linha para deletar');
+                return;
+            }
+
+            if (!confirm(`Tem certeza que deseja deletar ${selecionados.length} linha(s)?`)) {
+                return;
+            }
+
+            try {
+                for (const index of selecionados) {
+                    await apiFetch(`${API_BASE}/dados/${index}`, { method: 'DELETE' });
+                }
+                await carregarDados();
+            } catch (error) {
+                alert('Erro ao deletar registros');
+            }
+        }
+
+        function aplicarFiltrosDB() {
+            atualizarTabelaDados();
+        }
+
+        function limparFiltrosDB() {
+            document.getElementById('dbFilterData').value = '';
+            document.getElementById('dbFilterDataInicio').value = '';
+            document.getElementById('dbFilterDataFim').value = '';
+            document.getElementById('dbFilterEcommerce').value = '';
+            atualizarTabelaDados();
+        }
+
+        async function handleFileUpload() {
+            if (!podeEscreverDados()) {
+                alert('Seu perfil não tem permissão para importar vendas.');
+                return;
+            }
+
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const response = await apiFetch(`${API_BASE}/importar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/octet-stream' },
+                    body: arrayBuffer
+                });
+
+                if (response.ok) {
+                    alert('Arquivo importado com sucesso!');
+                    document.getElementById('fileInput').value = '';
+                    document.getElementById('fileName').textContent = '';
+                    document.getElementById('importBtn').style.display = 'none';
+                    await carregarDados();
+                } else {
+                    alert('Erro ao importar arquivo');
+                }
+            } catch (error) {
+                alert('Erro ao processar arquivo');
+            }
+        }
+
+        function exportarDados() {
+            const ws = XLSX.utils.json_to_sheet(vendas.map(v => ({
+                Data: formatarData(v.data),  // Converte yyyy-mm-dd para dd/mm/yyyy
+                Ecommerce: v.ecommerce,
+                Vendas: v.vendas,
+                Receita: v.receita
+            })));
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+            XLSX.writeFile(wb, 'vendas_backup.xlsx');
+        }
+
+        // ===== CALENDÁRIO PARA SELEÇÃO DE INTERVALO DE DATAS =====
+        let calendarState = {
+            currentDate: new Date(),
+            dataInicio: null,
+            dataFim: null,
+            modo: 'dashboard' // 'dashboard' ou 'bancoDados'
+        };
+
+        function abrirCalendarioDashboard() {
+            calendarState.modo = 'dashboard';
+            calendarState.dataInicio = document.getElementById('filterDataInicio').value 
+                ? new Date(document.getElementById('filterDataInicio').value) 
+                : null;
+            calendarState.dataFim = document.getElementById('filterDataFim').value 
+                ? new Date(document.getElementById('filterDataFim').value) 
+                : null;
+            calendarState.currentDate = new Date();
+            abrirCalendario();
+        }
+
+        function abrirCalendarioBancoDados() {
+            calendarState.modo = 'bancoDados';
+            calendarState.dataInicio = document.getElementById('dbFilterDataInicio').value 
+                ? new Date(document.getElementById('dbFilterDataInicio').value) 
+                : null;
+            calendarState.dataFim = document.getElementById('dbFilterDataFim').value 
+                ? new Date(document.getElementById('dbFilterDataFim').value) 
+                : null;
+            calendarState.currentDate = new Date();
+            abrirCalendario();
+        }
+
+        function abrirCalendario() {
+            console.log('🗓️ Abrindo calendário, modo:', calendarState.modo);
+            document.getElementById('calendarModal').classList.add('active');
+            renderizarCalendario();
+        }
+
+        function fecharCalendario() {
+            document.getElementById('calendarModal').classList.remove('active');
+            calendarState.dataInicio = null;
+            calendarState.dataFim = null;
+        }
+
+        function calendarioMesAnterior() {
+            calendarState.currentDate.setMonth(calendarState.currentDate.getMonth() - 1);
+            renderizarCalendario();
+        }
+
+        function calendarioProximoMes() {
+            calendarState.currentDate.setMonth(calendarState.currentDate.getMonth() + 1);
+            renderizarCalendario();
+        }
+
+        function renderizarCalendario() {
+            const year = calendarState.currentDate.getFullYear();
+            const month = calendarState.currentDate.getMonth();
+            const hoje = new Date();
+
+            // Atualizar título
+            const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('calendarTitle').textContent = `${meses[month]} ${year}`;
+
+            // Obter primeiro dia do mês e quantidade de dias
+            const primeiroDia = new Date(year, month, 1).getDay();
+            const diasMes = new Date(year, month + 1, 0).getDate();
+            const diasMesAnterior = new Date(year, month, 0).getDate();
+
+            const container = document.getElementById('calendarDays');
+            container.innerHTML = '';
+
+            // Dias do mês anterior
+            for (let i = primeiroDia - 1; i >= 0; i--) {
+                const dia = diasMesAnterior - i;
+                const el = document.createElement('div');
+                el.className = 'calendar-day other-month';
+                el.textContent = dia;
+                container.appendChild(el);
+            }
+
+            // Dias do mês atual
+            for (let dia = 1; dia <= diasMes; dia++) {
+                const el = document.createElement('div');
+                el.textContent = dia;
+                el.className = 'calendar-day';
+
+                const dataAtual = new Date(year, month, dia);
+                const dataFormatada = dataAtual.toISOString().split('T')[0];
+
+                // Verificar se está selecionado
+                const dataInicioStr = calendarState.dataInicio ? 
+                    calendarState.dataInicio.toISOString().split('T')[0] : null;
+                const dataFimStr = calendarState.dataFim ? 
+                    calendarState.dataFim.toISOString().split('T')[0] : null;
+
+                let isInitial = dataFormatada === dataInicioStr;
+                let isFinal = dataFormatada === dataFimStr;
+                let isInRange = false;
+
+                if (dataInicioStr && dataFimStr) {
+                    isInRange = dataFormatada > dataInicioStr && dataFormatada < dataFimStr;
+                }
+
+                if (isInitial || isFinal) {
+                    el.classList.add('selected');
+                } else if (isInRange) {
+                    el.classList.add('in-range');
+                }
+
+                el.onclick = () => {
+                    if (!calendarState.dataInicio) {
+                        calendarState.dataInicio = new Date(dataAtual);
+                    } else if (!calendarState.dataFim) {
+                        if (dataAtual >= calendarState.dataInicio) {
+                            calendarState.dataFim = new Date(dataAtual);
+                        } else {
+                            calendarState.dataFim = calendarState.dataInicio;
+                            calendarState.dataInicio = new Date(dataAtual);
+                        }
+                    } else {
+                        // Reset: começar nova seleção
+                        calendarState.dataInicio = new Date(dataAtual);
+                        calendarState.dataFim = null;
+                    }
+                    renderizarCalendario();
+                };
+
+                container.appendChild(el);
+            }
+
+            // Dias do próximo mês
+            const totalCells = container.children.length;
+            const remainingCells = 42 - totalCells; // 6 linhas x 7 colunas
+            for (let dia = 1; dia <= remainingCells; dia++) {
+                const el = document.createElement('div');
+                el.className = 'calendar-day other-month';
+                el.textContent = dia;
+                container.appendChild(el);
+            }
+        }
+
+        function confirmarDataRange() {
+            if (calendarState.modo === 'dashboard') {
+                if (calendarState.dataInicio) {
+                    const dataI = calendarState.dataInicio.toISOString().split('T')[0];
+                    document.getElementById('filterDataInicio').value = dataI;
+                    
+                    let texto = formatarData(dataI);
+                    
+                    if (calendarState.dataFim) {
+                        const dataF = calendarState.dataFim.toISOString().split('T')[0];
+                        document.getElementById('filterDataFim').value = dataF;
+                        texto += ` até ${formatarData(dataF)}`;
+                    }
+                    document.getElementById('dashboardDateRangeText').textContent = `📅 ${texto}`;
+                }
+                aplicarFiltros();
+            } else if (calendarState.modo === 'bancoDados') {
+                if (calendarState.dataInicio && !calendarState.dataFim) {
+                    // Apenas um dia selecionado
+                    const data = calendarState.dataInicio.toISOString().split('T')[0];
+                    document.getElementById('dbFilterData').value = data;
+                    document.getElementById('dbFilterDataInicio').value = '';
+                    document.getElementById('dbFilterDataFim').value = '';
+                    document.getElementById('bdDateRangeText').textContent = `📅 ${formatarData(data)}`;
+                } else if (calendarState.dataInicio && calendarState.dataFim) {
+                    // Intervalo selecionado
+                    const dataI = calendarState.dataInicio.toISOString().split('T')[0];
+                    const dataF = calendarState.dataFim.toISOString().split('T')[0];
+                    document.getElementById('dbFilterData').value = '';
+                    document.getElementById('dbFilterDataInicio').value = dataI;
+                    document.getElementById('dbFilterDataFim').value = dataF;
+                    document.getElementById('bdDateRangeText').textContent = `📅 ${formatarData(dataI)} até ${formatarData(dataF)}`;
+                }
+                aplicarFiltrosDB();
+            }
+
+            // Forcar fechamento do modal para garantir que o usuario continue navegando
+            fecharCalendario();
+            document.getElementById('calendarModal').classList.remove('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('fileInput').addEventListener('change', function() {
+                if (this.files[0]) {
+                    document.getElementById('fileName').textContent = `Arquivo selecionado: ${this.files[0].name}`;
+                    document.getElementById('importBtn').style.display = 'inline-flex';
+                }
+            });
+
+            document.getElementById('authForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (authMode === 'register') {
+                    await fazerCadastro();
+                } else {
+                    await fazerLogin();
+                }
+            });
+
+            setAuthMode('login');
+
+            document.getElementById('comp1Month').valueAsDate = new Date();
+            document.getElementById('comp2Month').valueAsDate = new Date();
+
+            const sessaoOk = await validarSessao();
+            if (sessaoOk) {
+                await carregarDadosComPermissao();
+            }
+
+            // Reforco de populacao para evitar estado vazio por erro temporario de render.
+            setTimeout(() => {
+                const select = document.getElementById('filterEcommerces');
+                if (select && select.options.length === 0 && vendas.length > 0) {
+                    atualizarEcommercesDisponiveis();
+                }
+            }, 300);
+
+            // Fechar calendario ao clicar fora
+            document.getElementById('calendarModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    fecharCalendario();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
