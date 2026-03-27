@@ -10,7 +10,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -51,33 +51,31 @@ if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const db = new sqlite3.Database(DB_FILE);
+const db = new Database(DB_FILE);
 
 function dbRun(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
-            if (err) return reject(err);
-            resolve(this);
-        });
-    });
+    try {
+        const result = db.prepare(sql).run(params);
+        return Promise.resolve({ lastID: result.lastInsertRowid, changes: result.changes });
+    } catch (err) {
+        return Promise.reject(err);
+    }
 }
 
 function dbGet(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) return reject(err);
-            resolve(row);
-        });
-    });
+    try {
+        return Promise.resolve(db.prepare(sql).get(params));
+    } catch (err) {
+        return Promise.reject(err);
+    }
 }
 
 function dbAll(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
-        });
-    });
+    try {
+        return Promise.resolve(db.prepare(sql).all(params));
+    } catch (err) {
+        return Promise.reject(err);
+    }
 }
 
 function converterData(dataStr) {
