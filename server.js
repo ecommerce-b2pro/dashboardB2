@@ -4,6 +4,7 @@ const express = require('express');
 const XLSX = require('xlsx');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -13,9 +14,19 @@ const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+let JWT_SECRET = process.env.JWT_SECRET || '';
+if (!JWT_SECRET || JWT_SECRET === 'dev-secret-change-me' || JWT_SECRET.length < 32) {
+    if (NODE_ENV === 'production') {
+        JWT_SECRET = crypto.randomBytes(48).toString('hex');
+        console.warn('⚠️  JWT_SECRET não configurado. Um segredo temporário foi gerado para esta sessão.');
+        console.warn('⚠️  Configure JWT_SECRET (>=32 chars) nas variáveis de ambiente para manter sessões entre reinicializações.');
+    } else {
+        JWT_SECRET = 'dev-secret-change-me';
+    }
+}
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@hubvendas.com').toLowerCase();
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'admin').trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'TroqueEstaSenhaAgora123!';
@@ -23,11 +34,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'TroqueEstaSenhaAgora123!';
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'dashboard.db');
 const EXCEL_FILE = path.join(__dirname, 'dados.xlsx');
-
-if (NODE_ENV === 'production' && (JWT_SECRET === 'dev-secret-change-me' || JWT_SECRET.length < 32)) {
-    console.error('❌ Segurança: defina JWT_SECRET forte (>=32 chars) em produção.');
-    process.exit(1);
-}
 
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -765,9 +771,16 @@ app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
     }
 });
 
+app.use((req, res) => {
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ erro: 'Recurso não encontrado' });
+    }
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
 inicializarBanco()
     .then(() => {
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`\n========================================`);
             console.log(`🚀 Servidor iniciado com sucesso!`);
             console.log(`📊 Abra em: http://localhost:${PORT}`);
