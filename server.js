@@ -821,6 +821,22 @@ app.get('/api/vendas-mes', autenticarToken, async (req, res) => {
     }
 });
 
+app.get('/api/meses-disponiveis', autenticarToken, async (req, res) => {
+    try {
+        const rows = await dbAll(
+            `SELECT DISTINCT SUBSTRING(data, 1, 7) AS mes
+             FROM sales
+             WHERE data LIKE '____-__-__'
+             ORDER BY mes DESC`
+        );
+        const meses = rows.map((r) => r.mes);
+        return res.json({ meses });
+    } catch (error) {
+        console.error('Erro ao buscar meses disponíveis:', error);
+        return res.status(500).json({ erro: 'Erro ao buscar meses disponíveis' });
+    }
+});
+
 app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
     try {
         const hoje = new Date();

@@ -1388,9 +1388,7 @@
                                 </div>
                                 <div class="filter-group">
                                     <label>Mês</label>
-                                    <div class="month-picker-wrapper" onclick="abrirSeletorMes('comp1Month')">
-                                        <input type="month" id="comp1Month">
-                                    </div>
+                                    <select id="comp1Month"></select>
                                 </div>
                             </div>
                         </div>
@@ -1403,9 +1401,7 @@
                                 </div>
                                 <div class="filter-group">
                                     <label>Mês</label>
-                                    <div class="month-picker-wrapper" onclick="abrirSeletorMes('comp2Month')">
-                                        <input type="month" id="comp2Month">
-                                    </div>
+                                    <select id="comp2Month"></select>
                                 </div>
                             </div>
                         </div>
@@ -1532,7 +1528,7 @@
                 <div class="filters-container" style="margin-bottom: 24px;">
                     <div class="filter-group" style="max-width: 280px;">
                         <label>📅 Mês de Referência</label>
-                        <input type="month" id="salesMonthFilter" onchange="carregarVendasMes()">
+                        <select id="salesMonthFilter" onchange="carregarVendasMes()"></select>
                     </div>
                 </div>
 
@@ -2002,12 +1998,73 @@
             }
         }
 
+        const NOMES_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                              'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+        function formatarMesLabel(mesStr) {
+            const partes = mesStr.split('-');
+            if (partes.length < 2) return mesStr;
+            const ano = partes[0];
+            const mes = parseInt(partes[1], 10);
+            if (mes < 1 || mes > 12 || !Number.isFinite(mes)) return mesStr;
+            return `${NOMES_MESES[mes - 1]} ${ano}`;
+        }
+
+        function preencherSelectMes(selectId, meses, valorAtual) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const prevValue = valorAtual !== undefined ? valorAtual : select.value;
+            select.innerHTML = '';
+            meses.forEach(mes => {
+                const option = document.createElement('option');
+                option.value = mes;
+                option.textContent = formatarMesLabel(mes);
+                select.appendChild(option);
+            });
+            if (prevValue && meses.includes(prevValue)) {
+                select.value = prevValue;
+            } else if (meses.length > 0) {
+                select.value = meses[0];
+            }
+        }
+
+        async function carregarMesesDisponiveis() {
+            try {
+                const response = await apiFetch(`${API_BASE}/meses-disponiveis`);
+                if (!response.ok) {
+                    console.error('Erro ao buscar meses disponíveis:', response.status, response.statusText);
+                    return [];
+                }
+                const data = await response.json();
+                return Array.isArray(data.meses) ? data.meses : [];
+            } catch (error) {
+                console.error('Erro ao carregar meses disponíveis:', error);
+                return [];
+            }
+        }
+
+        function obterMesesDisponiveisLocais() {
+            const conjunto = new Set();
+            vendas.forEach(v => {
+                const partes = String(v.data || '').split('-');
+                if (partes.length >= 2 && partes[0] && partes[1]) {
+                    conjunto.add(`${partes[0]}-${partes[1]}`);
+                }
+            });
+            return [...conjunto].sort((a, b) => b.localeCompare(a));
+        }
+
+        function atualizarMesesComparativo() {
+            const meses = obterMesesDisponiveisLocais();
+            preencherSelectMes('comp1Month', meses);
+            preencherSelectMes('comp2Month', meses);
+        }
+
         function inicializarFiltroVendas() {
-            const hoje = new Date();
-            const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
-            const filtro = document.getElementById('salesMonthFilter');
-            if (filtro) filtro.value = mesAtual;
-            carregarVendasMes();
+            carregarMesesDisponiveis().then(meses => {
+                preencherSelectMes('salesMonthFilter', meses);
+                carregarVendasMes();
+            });
         }
 
         async function carregarVendasMes() {
@@ -2500,6 +2557,8 @@
             });
             if (dbSelectedValue) dbFilterSelect.value = dbSelectedValue;
             console.log('✓ Select do BD atualizado');
+
+            atualizarMesesComparativo();
         }
 
         function abrirSeletorMes(inputId) {
@@ -3449,9 +3508,6 @@
             });
 
             setAuthMode('login');
-
-            document.getElementById('comp1Month').valueAsDate = new Date();
-            document.getElementById('comp2Month').valueAsDate = new Date();
 
             const sessaoOk = await validarSessao();
             if (sessaoOk) {
