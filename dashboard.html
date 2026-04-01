@@ -3076,6 +3076,16 @@
                 .map(i => vendas[i] && vendas[i]._id)
                 .filter(id => id != null);
 
+            if (ids.length === 0) {
+                alert('Não foi possível identificar os registros selecionados. Recarregue a página e tente novamente.');
+                return;
+            }
+
+            if (ids.length < indices.length) {
+                const semId = indices.length - ids.length;
+                console.warn(`${semId} registro(s) sem _id foram ignorados da exclusão.`);
+            }
+
             const confirmado = await mostrarConfirmModal({
                 icone: '🗑️',
                 titulo: `Deletar ${ids.length} registro(s)`,

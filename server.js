@@ -209,6 +209,7 @@ async function inicializarBanco() {
 
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_sales_data ON sales(data)`);
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_sales_ecommerce ON sales(ecommerce)`);
+    await dbRun(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_data_ecommerce_unique ON sales(data, LOWER(ecommerce))`);
 
     await garantirColunaUsername();
     await garantirColunasControleUsuarios();
