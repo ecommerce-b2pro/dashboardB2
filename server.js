@@ -9,7 +9,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -19,9 +19,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@hubvendas.com').toLowerCase();
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || 'admin').trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'TroqueEstaSenhaAgora123!';
+const DATABASE_URL = process.env.DATABASE_URL || '';
 
-const DATA_DIR = path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'dashboard.db');
 const EXCEL_FILE = path.join(__dirname, 'dados.xlsx');
 
 if (NODE_ENV === 'production' && (JWT_SECRET === 'dev-secret-change-me' || JWT_SECRET.length < 32)) {
@@ -29,37 +28,30 @@ if (NODE_ENV === 'production' && (JWT_SECRET === 'dev-secret-change-me' || JWT_S
     process.exit(1);
 }
 
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+if (NODE_ENV === 'production' && !DATABASE_URL) {
+    console.error('❌ Configuração: defina DATABASE_URL em produção.');
+    process.exit(1);
 }
 
-const db = new sqlite3.Database(DB_FILE);
+const pool = new Pool({
+    connectionString: DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/dashboard',
+    ssl: NODE_ENV === 'production'
+        ? { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true' }
+        : false
+});
 
-function dbRun(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
-            if (err) return reject(err);
-            resolve(this);
-        });
-    });
+async function dbRun(sql, params = []) {
+    return pool.query(sql, params);
 }
 
-function dbGet(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) return reject(err);
-            resolve(row);
-        });
-    });
+async function dbGet(sql, params = []) {
+    const result = await pool.query(sql, params);
+    return result.rows[0] || null;
 }
 
-function dbAll(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
-        });
-    });
+async function dbAll(sql, params = []) {
+    const result = await pool.query(sql, params);
+    return result.rows;
 }
 
 function converterData(dataStr) {
@@ -143,7 +135,7 @@ async function gerarUsernameUnico(base) {
     let sufixo = 1;
 
     while (true) {
-        const existente = await dbGet('SELECT id FROM users WHERE username = ?', [candidato]);
+        const existente = await dbGet('SELECT id FROM users WHERE username = $1', [candidato]);
         if (!existente) return candidato;
         sufixo += 1;
         candidato = `${usernameBase}${sufixo}`;
@@ -151,8 +143,9 @@ async function gerarUsernameUnico(base) {
 }
 
 async function garantirColunaUsername() {
-    const colunas = await dbAll('PRAGMA table_info(users)');
-    const temUsername = colunas.some((c) => c.name === 'username');
+    const temUsername = await dbGet(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'username'"
+    );
 
     if (!temUsername) {
         await dbRun('ALTER TABLE users ADD COLUMN username TEXT');
@@ -162,7 +155,7 @@ async function garantirColunaUsername() {
     for (const user of semUsername) {
         const base = String(user.email || '').split('@')[0] || 'usuario';
         const unico = await gerarUsernameUnico(base);
-        await dbRun('UPDATE users SET username = ? WHERE id = ?', [unico, user.id]);
+        await dbRun('UPDATE users SET username = $1 WHERE id = $2', [unico, user.id]);
     }
 
     await dbRun('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email)');
@@ -170,9 +163,12 @@ async function garantirColunaUsername() {
 }
 
 async function garantirColunasControleUsuarios() {
-    const colunas = await dbAll('PRAGMA table_info(users)');
-    const temStatus = colunas.some((c) => c.name === 'status');
-    const temApprovedBy = colunas.some((c) => c.name === 'approved_by');
+    const temStatus = await dbGet(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'status'"
+    );
+    const temApprovedBy = await dbGet(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'approved_by'"
+    );
 
     if (!temStatus) {
         await dbRun("ALTER TABLE users ADD COLUMN status TEXT");
@@ -187,26 +183,26 @@ async function garantirColunasControleUsuarios() {
 async function inicializarBanco() {
     await dbRun(`
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'user',
             status TEXT NOT NULL DEFAULT 'active',
             approved_by INTEGER,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     `);
 
     await dbRun(`
         CREATE TABLE IF NOT EXISTS sales (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             data TEXT NOT NULL,
             ecommerce TEXT NOT NULL,
             vendas INTEGER NOT NULL,
             receita REAL NOT NULL,
             created_by INTEGER,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             FOREIGN KEY(created_by) REFERENCES users(id)
         )
     `);
@@ -217,22 +213,22 @@ async function inicializarBanco() {
     await garantirColunaUsername();
     await garantirColunasControleUsuarios();
 
-    const admin = await dbGet('SELECT id FROM users WHERE email = ?', [ADMIN_EMAIL]);
+    const admin = await dbGet('SELECT id FROM users WHERE email = $1', [ADMIN_EMAIL]);
     if (!admin) {
         const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
         const adminUsernameNormalizado = normalizarUsername(ADMIN_USERNAME || 'admin');
         const adminUsername = await gerarUsernameUnico(adminUsernameNormalizado || 'admin');
         await dbRun(
-            'INSERT INTO users (username, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO users (username, email, password_hash, role, status) VALUES ($1, $2, $3, $4, $5)',
             [adminUsername, ADMIN_EMAIL, hash, 'admin', 'active']
         );
         console.log(`✅ Usuário admin criado: ${ADMIN_EMAIL}`);
     } else {
-        await dbRun('UPDATE users SET role = ?, status = ? WHERE email = ?', ['admin', 'active', ADMIN_EMAIL]);
+        await dbRun('UPDATE users SET role = $1, status = $2 WHERE email = $3', ['admin', 'active', ADMIN_EMAIL]);
     }
 
     const contagemSales = await dbGet('SELECT COUNT(*) AS total FROM sales');
-    if (!contagemSales || contagemSales.total === 0) {
+    if (!contagemSales || Number(contagemSales.total) === 0) {
         await migrarExcelParaBanco();
     }
 }
@@ -260,12 +256,12 @@ async function migrarExcelParaBanco() {
             if (!data || !ecommerce) continue;
 
             await dbRun(
-                'INSERT INTO sales (data, ecommerce, vendas, receita) VALUES (?, ?, ?, ?)',
+                'INSERT INTO sales (data, ecommerce, vendas, receita) VALUES ($1, $2, $3, $4)',
                 [data, ecommerce, vendas, receita]
             );
         }
 
-        console.log('✅ Migração do Excel para SQLite concluída.');
+        console.log('✅ Migração do Excel para PostgreSQL concluída.');
     } catch (error) {
         console.error('Erro ao migrar Excel para banco:', error);
     }
@@ -359,19 +355,19 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
             return res.status(400).json({ erro: 'A senha deve ter ao menos 8 caracteres' });
         }
 
-        const usernameExistente = await dbGet('SELECT id FROM users WHERE username = ?', [username]);
+        const usernameExistente = await dbGet('SELECT id FROM users WHERE username = $1', [username]);
         if (usernameExistente) {
             return res.status(409).json({ erro: 'Nome de usuário já cadastrado' });
         }
 
-        const existente = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
+        const existente = await dbGet('SELECT id FROM users WHERE email = $1', [email]);
         if (existente) {
             return res.status(409).json({ erro: 'E-mail já cadastrado' });
         }
 
         const hash = await bcrypt.hash(password, 12);
         await dbRun(
-            'INSERT INTO users (username, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO users (username, email, password_hash, role, status) VALUES ($1, $2, $3, $4, $5)',
             [username, email, hash, 'user', 'pending']
         );
 
@@ -397,7 +393,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         }
 
         const user = await dbGet(
-            'SELECT id, username, email, password_hash, role, status FROM users WHERE email = ? OR username = ?',
+            'SELECT id, username, email, password_hash, role, status FROM users WHERE email = $1 OR username = $2',
             [identifierEmail, identifierUsername]
         );
         if (!user) {
@@ -425,7 +421,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 });
 
 app.get('/api/auth/me', autenticarToken, async (req, res) => {
-    const user = await dbGet('SELECT id, username, email, role, status FROM users WHERE id = ?', [req.user.sub]);
+    const user = await dbGet('SELECT id, username, email, role, status FROM users WHERE id = $1', [req.user.sub]);
     if (!user) {
         return res.status(401).json({ erro: 'Usuário não encontrado' });
     }
@@ -440,7 +436,7 @@ app.get('/api/admin/users', autenticarToken, autorizarRoles('admin'), async (req
         const users = await dbAll(
             `SELECT id, username, email, role, status, created_at
              FROM users
-             ORDER BY datetime(created_at) DESC, id DESC`
+             ORDER BY created_at DESC, id DESC`
         );
         return res.json({ users });
     } catch (error) {
@@ -460,7 +456,7 @@ app.get('/api/admin/users/:id', autenticarToken, autorizarRoles('admin'), async 
         const user = await dbGet(
             `SELECT id, username, email, role, status, created_at
              FROM users
-             WHERE id = ?`,
+             WHERE id = $1`,
             [userId]
         );
 
@@ -483,13 +479,13 @@ app.patch('/api/admin/users/:id/approve', autenticarToken, autorizarRoles('admin
             return res.status(400).json({ erro: 'ID inválido' });
         }
 
-        const alvo = await dbGet('SELECT id FROM users WHERE id = ?', [userId]);
+        const alvo = await dbGet('SELECT id FROM users WHERE id = $1', [userId]);
         if (!alvo) {
             return res.status(404).json({ erro: 'Usuário não encontrado' });
         }
 
         await dbRun(
-            'UPDATE users SET role = ?, status = ?, approved_by = ? WHERE id = ?',
+            'UPDATE users SET role = $1, status = $2, approved_by = $3 WHERE id = $4',
             ['viewer', 'active', req.user.sub, userId]
         );
 
@@ -508,7 +504,7 @@ app.patch('/api/admin/users/:id/reject', autenticarToken, autorizarRoles('admin'
             return res.status(400).json({ erro: 'ID inválido' });
         }
 
-        await dbRun('UPDATE users SET status = ? WHERE id = ?', ['blocked', userId]);
+        await dbRun('UPDATE users SET status = $1 WHERE id = $2', ['blocked', userId]);
         return res.json({ sucesso: true });
     } catch (error) {
         console.error('Erro ao recusar usuário:', error);
@@ -544,18 +540,18 @@ app.patch('/api/admin/users/:id', autenticarToken, autorizarRoles('admin'), asyn
             return res.status(400).json({ erro: 'Status inválido' });
         }
 
-        const existenteUsername = await dbGet('SELECT id FROM users WHERE username = ? AND id <> ?', [username, userId]);
+        const existenteUsername = await dbGet('SELECT id FROM users WHERE username = $1 AND id <> $2', [username, userId]);
         if (existenteUsername) {
             return res.status(409).json({ erro: 'Nome de usuário já em uso' });
         }
 
-        const existenteEmail = await dbGet('SELECT id FROM users WHERE email = ? AND id <> ?', [email, userId]);
+        const existenteEmail = await dbGet('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, userId]);
         if (existenteEmail) {
             return res.status(409).json({ erro: 'E-mail já em uso' });
         }
 
         await dbRun(
-            'UPDATE users SET username = ?, email = ?, role = ?, status = ? WHERE id = ?',
+            'UPDATE users SET username = $1, email = $2, role = $3, status = $4 WHERE id = $5',
             [username, email, role, status, userId]
         );
 
@@ -579,7 +575,7 @@ app.patch('/api/admin/users/:id/role', autenticarToken, autorizarRoles('admin'),
             return res.status(400).json({ erro: 'Perfil inválido' });
         }
 
-        await dbRun('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
+        await dbRun('UPDATE users SET role = $1 WHERE id = $2', [role, userId]);
         return res.json({ sucesso: true });
     } catch (error) {
         console.error('Erro ao alterar perfil:', error);
@@ -601,7 +597,7 @@ app.patch('/api/admin/users/:id/password', autenticarToken, autorizarRoles('admi
         }
 
         const hash = await bcrypt.hash(newPassword, 12);
-        await dbRun('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId]);
+        await dbRun('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, userId]);
         return res.json({ sucesso: true });
     } catch (error) {
         console.error('Erro ao alterar senha:', error);
@@ -622,7 +618,7 @@ app.patch('/api/admin/users/:id/status', autenticarToken, autorizarRoles('admin'
             return res.status(400).json({ erro: 'Status inválido' });
         }
 
-        await dbRun('UPDATE users SET status = ? WHERE id = ?', [status, userId]);
+        await dbRun('UPDATE users SET status = $1 WHERE id = $2', [status, userId]);
         return res.json({ sucesso: true });
     } catch (error) {
         console.error('Erro ao alterar status:', error);
@@ -659,7 +655,7 @@ app.post('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res
         }
 
         await dbRun(
-            'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES ($1, $2, $3, $4, $5)',
             [data, ecommerce, vendas, receita, req.user.sub]
         );
 
@@ -683,7 +679,7 @@ app.delete('/api/dados/:index', autenticarToken, autorizarRoles('admin'), async 
         }
 
         const rowId = rows[index].id;
-        await dbRun('DELETE FROM sales WHERE id = ?', [rowId]);
+        await dbRun('DELETE FROM sales WHERE id = $1', [rowId]);
 
         return res.json({ sucesso: true, mensagem: 'Venda deletada com sucesso!' });
     } catch (error) {
@@ -711,7 +707,7 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
             if (!data || !ecommerce) continue;
 
             await dbRun(
-                'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES ($1, $2, $3, $4, $5)',
                 [data, ecommerce, vendas, receita, req.user.sub]
             );
         }
@@ -740,7 +736,7 @@ app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
                     SUM(vendas) AS vendas,
                     SUM(receita) AS receita
              FROM sales
-             WHERE data = ?
+             WHERE data = $1
              GROUP BY ecommerce
              ORDER BY ecommerce ASC`,
             [dataRef]
@@ -771,7 +767,7 @@ inicializarBanco()
             console.log(`\n========================================`);
             console.log(`🚀 Servidor iniciado com sucesso!`);
             console.log(`📊 Abra em: http://localhost:${PORT}`);
-            console.log(`🗄️ Banco SQLite: ${DB_FILE}`);
+            console.log(`🗄️ Banco PostgreSQL conectado`);
             console.log(`========================================\n`);
         });
     })
