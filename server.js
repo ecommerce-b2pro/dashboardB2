@@ -719,6 +719,61 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
     }
 });
 
+app.get('/api/vendas-mes', autenticarToken, async (req, res) => {
+    try {
+        const hoje = new Date();
+        const anoParam = parseInt(req.query.ano, 10);
+        const mesParam = parseInt(req.query.mes, 10);
+        const ano = Number.isFinite(anoParam) && anoParam > 0 ? anoParam : hoje.getFullYear();
+        const mes = Number.isFinite(mesParam) && mesParam >= 1 && mesParam <= 12 ? mesParam : (hoje.getMonth() + 1);
+
+        const mesStr = String(mes).padStart(2, '0');
+        const prefixo = `${ano}-${mesStr}`;
+
+        const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+        const itens = await dbAll(
+            `SELECT ecommerce,
+                    SUM(vendas) AS vendas,
+                    SUM(receita) AS receita
+             FROM sales
+             WHERE data LIKE $1
+             GROUP BY ecommerce
+             ORDER BY receita DESC`,
+            [prefixo + '%']
+        );
+
+        const itensHoje = await dbAll(
+            `SELECT ecommerce, SUM(receita) AS receita_hoje
+             FROM sales
+             WHERE data = $1
+             GROUP BY ecommerce`,
+            [hojeStr]
+        );
+
+        const receitaHojeMap = {};
+        itensHoje.forEach((item) => {
+            receitaHojeMap[item.ecommerce] = Number(item.receita_hoje) || 0;
+        });
+
+        const resultado = itens.map((item) => ({
+            ecommerce: item.ecommerce,
+            vendas: Number(item.vendas) || 0,
+            receita: Number(item.receita) || 0,
+            receitaHoje: receitaHojeMap[item.ecommerce] || 0
+        }));
+
+        return res.json({
+            mesReferencia: prefixo,
+            hoje: hojeStr,
+            itens: resultado
+        });
+    } catch (error) {
+        console.error('Erro ao buscar vendas do mês:', error);
+        return res.status(500).json({ erro: 'Erro ao buscar vendas do mês' });
+    }
+});
+
 app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
     try {
         const hoje = new Date();

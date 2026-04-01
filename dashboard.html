@@ -914,65 +914,204 @@
         .icon-edit { background: #312e81; color: #c7d2fe; }
         .icon-view { background: #1f2937; color: #d1d5db; }
 
-        .sales-yesterday-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+        /* === PÁGINA VENDAS - CARD DESTAQUE === */
+        .sales-featured-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 28px;
         }
 
-        .sales-yesterday-card {
-            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
-            padding: 18px;
+        .sales-featured-card {
+            background: linear-gradient(135deg, rgba(109,40,217,0.45) 0%, rgba(45,27,105,0.97) 100%);
+            border: 2px solid rgba(196, 132, 252, 0.6);
+            border-radius: 20px;
+            padding: 40px 52px;
+            min-width: 340px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 12px 48px rgba(3,1,15,0.8), 0 0 50px rgba(192,132,252,0.45), 0 0 90px rgba(130,66,229,0.25);
+            text-align: center;
+            position: relative;
+        }
+
+        .sales-featured-card .rank-badge {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 5px 20px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 14px rgba(192,132,252,0.5);
+            white-space: nowrap;
+        }
+
+        .sales-featured-card .store-name {
+            font-size: 30px;
+            font-weight: 700;
+            color: #e9d5ff;
+            margin: 10px 0 22px;
+        }
+
+        .sales-featured-card .sales-day-highlight {
+            background: linear-gradient(135deg, rgba(192,132,252,0.18) 0%, rgba(124,58,237,0.18) 100%);
+            border: 1px solid rgba(192,132,252,0.5);
             border-radius: 12px;
-            border: 1px solid rgba(196, 132, 252, 0.25);
+            padding: 14px 22px;
+            margin-bottom: 18px;
         }
 
-        .sales-yesterday-card h3 {
+        .sales-featured-card .sales-day-highlight .day-label {
             color: #c4b5fd;
             font-size: 13px;
             margin-bottom: 6px;
         }
 
-        .sales-yesterday-card p {
-            color: #e9d5ff;
-            font-size: 26px;
+        .sales-featured-card .sales-day-highlight .day-value {
+            color: #c084fc;
+            font-size: 28px;
             font-weight: 700;
         }
 
-        .sales-ecommerce-grid {
+        .sales-featured-card .sales-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 14px;
-            margin-bottom: 16px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 4px;
         }
 
-        .sales-ecommerce-card {
-            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
-            border: 1px solid rgba(196, 132, 252, 0.2);
-            border-radius: 12px;
-            padding: 16px;
+        .sales-featured-card .sales-stat {
+            background: rgba(15,10,26,0.65);
+            border-radius: 10px;
+            padding: 12px 16px;
         }
 
-        .sales-ecommerce-card h4 {
+        .sales-featured-card .sales-stat .stat-label {
+            color: #a78bfa;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .sales-featured-card .sales-stat .stat-value {
             color: #ddd6fe;
-            font-size: 16px;
-            margin-bottom: 8px;
+            font-size: 20px;
+            font-weight: 700;
         }
 
-        .sales-ecommerce-card .sales-line {
+        /* === PÁGINA VENDAS - RANKING GRID === */
+        .sales-ranking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .sales-rank-card {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            border: 1px solid rgba(196, 132, 252, 0.25);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 6px 24px rgba(3,1,15,0.6), 0 0 20px rgba(192,132,252,0.15);
+        }
+
+        .sales-rank-card .rank-number {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            font-size: 12px;
+            color: #a78bfa;
+            font-weight: 700;
+            background: rgba(192,132,252,0.12);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .sales-rank-card .store-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ddd6fe;
+            margin-bottom: 14px;
+            padding-right: 40px;
+        }
+
+        .sales-rank-card .sales-day-highlight {
+            background: rgba(192,132,252,0.1);
+            border: 1px solid rgba(192,132,252,0.28);
+            border-radius: 8px;
+            padding: 9px 14px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
-            color: #c4b5fd;
-            font-size: 14px;
+            align-items: center;
+            gap: 8px;
         }
 
-        .sales-totals-footer {
-            border-top: 1px solid rgba(196, 132, 252, 0.25);
-            padding-top: 12px;
-            color: #a78bfa;
+        .sales-rank-card .sales-day-highlight .day-label {
+            color: #c4b5fd;
+            font-size: 12px;
+        }
+
+        .sales-rank-card .sales-day-highlight .day-value {
+            color: #c084fc;
+            font-size: 16px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .sales-rank-card .sales-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            border-bottom: 1px solid rgba(196,132,252,0.1);
+            color: #c4b5fd;
             font-size: 13px;
+        }
+
+        .sales-rank-card .sales-stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .sales-rank-card .sales-stat-row strong {
+            color: #ddd6fe;
+        }
+
+        .sales-no-data {
+            text-align: center;
+            color: #a78bfa;
+            padding: 50px 0;
+            font-size: 18px;
+        }
+
+        /* === SORT ARROWS - BANCO DE DADOS === */
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .sort-header:hover {
+            color: #e9d5ff;
+        }
+
+        .sort-arrow {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 11px;
+            color: #a78bfa;
+            opacity: 0.55;
+            transition: all 0.2s;
+        }
+
+        .sort-arrow.active {
+            color: #c084fc;
+            opacity: 1;
         }
     </style>
 </head>
@@ -1234,10 +1373,10 @@
                                 <th style="width: 40px;">
                                     <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
                                 </th>
-                                <th>Data</th>
-                                <th>Ecommerce</th>
-                                <th>Vendas</th>
-                                <th>Receita</th>
+                                <th class="sort-header" onclick="sortarTabelaDB('data')">Data <span id="sortArrowData" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('ecommerce')">Ecommerce <span id="sortArrowEcommerce" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('vendas')">Vendas <span id="sortArrowVendas" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('receita')">Receita <span id="sortArrowReceita" class="sort-arrow">↕</span></th>
                                 <th style="width: 80px;">Ação</th>
                             </tr>
                         </thead>
@@ -1248,17 +1387,27 @@
 
             <div id="sales" class="page">
                 <div class="page-header">
-                    <h1>Página Vendas</h1>
+                    <h1>Vendas</h1>
                 </div>
 
-                <div class="filters-container">
-                    <div id="salesReference" style="color:#c4b5fd; margin-bottom: 16px;">Data de referência: -</div>
-                    <div id="salesEcommerceCards" class="sales-ecommerce-grid"></div>
-                    <div class="sales-totals-footer">
-                        <div>Total geral (ontem): <strong id="salesYesterdayTotalVendas">0</strong> vendas</div>
-                        <div>Receita geral (ontem): <strong id="salesYesterdayTotalReceita">R$ 0,00</strong></div>
+                <!-- Filtro de mês -->
+                <div class="filters-container" style="margin-bottom: 24px;">
+                    <div class="filter-group" style="max-width: 280px;">
+                        <label>📅 Mês de Referência</label>
+                        <input type="month" id="salesMonthFilter" onchange="carregarVendasMes()">
                     </div>
                 </div>
+
+                <!-- Sem dados -->
+                <div id="salesNoData" class="sales-no-data" style="display:none;">
+                    Nenhuma venda encontrada para o período selecionado.
+                </div>
+
+                <!-- Card destaque (#1 em receita) -->
+                <div id="salesFeaturedWrapper" class="sales-featured-wrapper"></div>
+
+                <!-- Cards das demais lojas -->
+                <div id="salesRankingGrid" class="sales-ranking-grid"></div>
             </div>
 
             <div id="adminUsers" class="page">
@@ -1301,6 +1450,8 @@
         let adminUsersCache = [];
         const adminEditingUsers = new Set();
         const adminDraftChanges = new Map();
+        let dbSortColuna = null;
+        let dbSortDirecao = 'asc';
 
         function definirMensagemAuth(texto, sucesso = false) {
             const el = document.getElementById('authMessage');
@@ -1664,7 +1815,7 @@
         async function carregarDados() {
             try {
                 if (ehViewer()) {
-                    await carregarPaginaVendasOntem();
+                    // Viewers usam a página de vendas mensais
                     return;
                 }
 
@@ -1701,7 +1852,7 @@
 
         async function carregarDadosComPermissao() {
             if (ehViewer()) {
-                await carregarPaginaVendasOntem();
+                inicializarFiltroVendas();
                 return;
             }
 
@@ -1712,49 +1863,100 @@
             }
         }
 
-        async function carregarPaginaVendasOntem() {
+        function inicializarFiltroVendas() {
+            const hoje = new Date();
+            const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+            const filtro = document.getElementById('salesMonthFilter');
+            if (filtro) filtro.value = mesAtual;
+            carregarVendasMes();
+        }
+
+        async function carregarVendasMes() {
+            const filtro = document.getElementById('salesMonthFilter');
+            if (!filtro || !filtro.value) return;
+
+            const [ano, mes] = filtro.value.split('-');
             try {
-                const response = await apiFetch(`${API_BASE}/vendas-dia-anterior`);
-                if (!response.ok) {
-                    return;
-                }
+                const response = await apiFetch(`${API_BASE}/vendas-mes?ano=${ano}&mes=${mes}`);
+                if (!response.ok) return;
 
                 const data = await response.json();
-                document.getElementById('salesReference').textContent = `Data de referência: ${formatarData(data.dataReferencia)}`;
-                document.getElementById('salesYesterdayTotalVendas').textContent = data.totalVendas || 0;
-                document.getElementById('salesYesterdayTotalReceita').textContent = `R$ ${(Number(data.totalReceita) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-
-                const cardsContainer = document.getElementById('salesEcommerceCards');
-                cardsContainer.innerHTML = '';
-
-                if (!data.itens || data.itens.length === 0) {
-                    cardsContainer.innerHTML = '<div class="sales-ecommerce-card"><h4>Sem dados</h4><div class="sales-line"><span>Vendas</span><strong>0</strong></div><div class="sales-line"><span>Receita</span><strong>R$ 0,00</strong></div></div>';
-                    return;
-                }
-
-                const itensOrdenados = [...data.itens].sort((a, b) => {
-                    const vendasA = Number(a.vendas) || 0;
-                    const vendasB = Number(b.vendas) || 0;
-                    if (vendasB !== vendasA) return vendasB - vendasA;
-
-                    const receitaA = Number(a.receita) || 0;
-                    const receitaB = Number(b.receita) || 0;
-                    return receitaB - receitaA;
-                });
-
-                itensOrdenados.forEach((item) => {
-                    const card = document.createElement('div');
-                    card.className = 'sales-ecommerce-card';
-                    card.innerHTML = `
-                        <h4>${item.ecommerce}</h4>
-                        <div class="sales-line"><span>Vendas</span><strong>${item.vendas}</strong></div>
-                        <div class="sales-line"><span>Receita</span><strong>R$ ${(Number(item.receita) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                    `;
-                    cardsContainer.appendChild(card);
-                });
+                renderizarVendasMes(data);
             } catch (error) {
-                console.error('Erro ao carregar página de vendas:', error);
+                console.error('Erro ao carregar vendas do mês:', error);
             }
+        }
+
+        function renderizarVendasMes(data) {
+            const itens = data.itens || [];
+            const hojeStr = data.hoje || '';
+            const hojeLabel = hojeStr ? `Receita de hoje (${formatarData(hojeStr)})` : 'Receita de hoje';
+
+            const featuredWrapper = document.getElementById('salesFeaturedWrapper');
+            const rankingGrid = document.getElementById('salesRankingGrid');
+            const noDataEl = document.getElementById('salesNoData');
+
+            featuredWrapper.innerHTML = '';
+            rankingGrid.innerHTML = '';
+
+            if (itens.length === 0) {
+                noDataEl.style.display = 'block';
+                return;
+            }
+            noDataEl.style.display = 'none';
+
+            // Card destaque — loja top 1 em receita
+            const top = itens[0];
+            const featuredCard = document.createElement('div');
+            featuredCard.className = 'sales-featured-card';
+            featuredCard.innerHTML = `
+                <div class="rank-badge">🏆 #1 LOJA TOP</div>
+                <div class="store-name">${escaparHtml(top.ecommerce)}</div>
+                <div class="sales-day-highlight">
+                    <div class="day-label">${escaparHtml(hojeLabel)}</div>
+                    <div class="day-value">R$ ${(top.receitaHoje || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div class="sales-stats">
+                    <div class="sales-stat">
+                        <div class="stat-label">Qtd. de Vendas</div>
+                        <div class="stat-value">${top.vendas}</div>
+                    </div>
+                    <div class="sales-stat">
+                        <div class="stat-label">Receita Total</div>
+                        <div class="stat-value">R$ ${(top.receita || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                </div>
+            `;
+            featuredWrapper.appendChild(featuredCard);
+
+            // Cards das demais lojas (ranking)
+            for (let i = 1; i < itens.length; i++) {
+                const item = itens[i];
+                const card = document.createElement('div');
+                card.className = 'sales-rank-card';
+                card.innerHTML = `
+                    <div class="rank-number">#${i + 1}</div>
+                    <div class="store-name">${escaparHtml(item.ecommerce)}</div>
+                    <div class="sales-day-highlight">
+                        <span class="day-label">${escaparHtml(hojeLabel)}</span>
+                        <span class="day-value">R$ ${(item.receitaHoje || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div class="sales-stat-row">
+                        <span>Qtd. de Vendas</span>
+                        <strong>${item.vendas}</strong>
+                    </div>
+                    <div class="sales-stat-row">
+                        <span>Receita Total</span>
+                        <strong>R$ ${(item.receita || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    </div>
+                `;
+                rankingGrid.appendChild(card);
+            }
+        }
+
+        async function carregarPaginaVendasOntem() {
+            // Mantido por compatibilidade — redireciona para a nova função mensal
+            inicializarFiltroVendas();
         }
 
         async function carregarUsuariosAdmin() {
@@ -2170,6 +2372,11 @@
             }
 
             const destino = paginaPermitida(page) ? page : paginaPadraoPorPerfil();
+
+            if (destino === 'sales') {
+                inicializarFiltroVendas();
+            }
+
             navegarParaPagina(destino);
         }
 
@@ -2554,9 +2761,67 @@
             return dataString;
         }
 
+        function sortarTabelaDB(coluna) {
+            if (dbSortColuna === coluna) {
+                dbSortDirecao = dbSortDirecao === 'asc' ? 'desc' : 'asc';
+            } else {
+                dbSortColuna = coluna;
+                dbSortDirecao = (coluna === 'receita' || coluna === 'vendas') ? 'desc' : 'asc';
+            }
+            atualizarTabelaDados();
+        }
+
+        function atualizarSetasSort() {
+            const colunas = ['data', 'ecommerce', 'vendas', 'receita'];
+            colunas.forEach((coluna) => {
+                const nomeCapitalizado = coluna.charAt(0).toUpperCase() + coluna.slice(1);
+                const el = document.getElementById(`sortArrow${nomeCapitalizado}`);
+                if (!el) return;
+                if (dbSortColuna === coluna) {
+                    el.textContent = dbSortDirecao === 'asc' ? '↑' : '↓';
+                    el.classList.add('active');
+                } else {
+                    el.textContent = '↕';
+                    el.classList.remove('active');
+                }
+            });
+        }
+
+        function ordenarVendasComIndice(lista) {
+            if (!dbSortColuna) return lista;
+            return lista.slice().sort((a, b) => {
+                let valA, valB;
+                switch (dbSortColuna) {
+                    case 'data':
+                        valA = a.v.data;
+                        valB = b.v.data;
+                        break;
+                    case 'ecommerce':
+                        valA = (a.v.ecommerce || '').toLowerCase();
+                        valB = (b.v.ecommerce || '').toLowerCase();
+                        break;
+                    case 'vendas':
+                        valA = a.v.vendas;
+                        valB = b.v.vendas;
+                        break;
+                    case 'receita':
+                        valA = a.v.receita;
+                        valB = b.v.receita;
+                        break;
+                    default:
+                        return 0;
+                }
+                if (valA < valB) return dbSortDirecao === 'asc' ? -1 : 1;
+                if (valA > valB) return dbSortDirecao === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
         function atualizarTabelaDados() {
             const tbody = document.getElementById('datasTableBody');
             tbody.innerHTML = '';
+
+            atualizarSetasSort();
 
             const podeEditar = podeEscreverDados();
             const selectAll = document.getElementById('selectAllCheckbox');
@@ -2569,43 +2834,44 @@
                 deletarSelecionadosBtn.style.display = 'none';
             }
 
-            // Aplicar filtros
+            // Aplicar filtros mantendo índice original para delete
             const dataFiltro = document.getElementById('dbFilterData').value;
             const dataInicioFiltro = document.getElementById('dbFilterDataInicio').value;
             const dataFimFiltro = document.getElementById('dbFilterDataFim').value;
             const ecommerceFiltro = document.getElementById('dbFilterEcommerce').value;
 
-            // Iterar sobre TODOS os vendas e aplicar filtros, mantendo índice original
+            const vendasFiltradas = [];
             vendas.forEach((v, originalIndex) => {
-                let mostrar = true;
+                if (dataFiltro && v.data !== dataFiltro) return;
+                if (dataInicioFiltro && v.data < dataInicioFiltro) return;
+                if (dataFimFiltro && v.data > dataFimFiltro) return;
+                if (ecommerceFiltro && v.ecommerce !== ecommerceFiltro) return;
+                vendasFiltradas.push({ v, originalIndex });
+            });
 
-                if (dataFiltro && v.data !== dataFiltro) mostrar = false;
-                if (dataInicioFiltro && v.data < dataInicioFiltro) mostrar = false;
-                if (dataFimFiltro && v.data > dataFimFiltro) mostrar = false;
-                if (ecommerceFiltro && v.ecommerce !== ecommerceFiltro) mostrar = false;
+            const vendasOrdenadas = ordenarVendasComIndice(vendasFiltradas);
 
-                if (mostrar) {
-                    const checkboxCell = podeEditar
-                        ? `<input type="checkbox" class="row-checkbox" data-index="${originalIndex}">`
-                        : '-';
-                    const acaoCell = podeEditar
-                        ? `<button class="btn-delete" onclick="deletarVenda(${originalIndex})">🗑️</button>`
-                        : '-';
+            vendasOrdenadas.forEach(({ v, originalIndex }) => {
+                const checkboxCell = podeEditar
+                    ? `<input type="checkbox" class="row-checkbox" data-index="${originalIndex}">`
+                    : '-';
+                const acaoCell = podeEditar
+                    ? `<button class="btn-delete" onclick="deletarVenda(${originalIndex})">🗑️</button>`
+                    : '-';
 
-                    const row = `
-                        <tr>
-                            <td style="text-align: center; padding: 15px;">
-                                ${checkboxCell}
-                            </td>
-                            <td>${formatarData(v.data)}</td>
-                            <td>${v.ecommerce}</td>
-                            <td>${v.vendas}</td>
-                            <td>R$ ${v.receita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                            <td>${acaoCell}</td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                }
+                const row = `
+                    <tr>
+                        <td style="text-align: center; padding: 15px;">
+                            ${checkboxCell}
+                        </td>
+                        <td>${formatarData(v.data)}</td>
+                        <td>${escaparHtml(v.ecommerce)}</td>
+                        <td>${v.vendas}</td>
+                        <td>R$ ${v.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td>${acaoCell}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
             });
 
             // Adicionar event listeners aos checkboxes
