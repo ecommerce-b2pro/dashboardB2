@@ -209,6 +209,7 @@ async function inicializarBanco() {
 
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_sales_data ON sales(data)`);
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_sales_ecommerce ON sales(ecommerce)`);
+    await dbRun(`CREATE UNIQUE INDEX IF NOT EXISTS idx_sales_data_ecommerce_unique ON sales(data, LOWER(ecommerce))`);
 
     await garantirColunaUsername();
     await garantirColunasControleUsuarios();
@@ -654,6 +655,14 @@ app.post('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res
             return res.status(400).json({ erro: 'Dados inválidos' });
         }
 
+        const duplicado = await dbGet(
+            'SELECT id FROM sales WHERE data = $1 AND LOWER(ecommerce) = LOWER($2)',
+            [data, ecommerce]
+        );
+        if (duplicado) {
+            return res.status(409).json({ erro: `Já existe uma venda para o ecommerce "${ecommerce}" na data ${data}. Cada ecommerce só pode ter uma venda por dia.` });
+        }
+
         await dbRun(
             'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES ($1, $2, $3, $4, $5)',
             [data, ecommerce, vendas, receita, req.user.sub]
@@ -688,6 +697,28 @@ app.delete('/api/dados/:index', autenticarToken, autorizarRoles('admin'), async 
     }
 });
 
+app.delete('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res) => {
+    try {
+        const ids = req.body && Array.isArray(req.body.ids) ? req.body.ids : null;
+        if (!ids || ids.length === 0) {
+            return res.status(400).json({ erro: 'Nenhum ID informado' });
+        }
+
+        const idsValidos = ids.filter(id => Number.isInteger(id) && id > 0);
+        if (idsValidos.length === 0) {
+            return res.status(400).json({ erro: 'IDs inválidos' });
+        }
+
+        const placeholders = idsValidos.map((_, i) => `$${i + 1}`).join(', ');
+        await dbRun(`DELETE FROM sales WHERE id IN (${placeholders})`, idsValidos);
+
+        return res.json({ sucesso: true, mensagem: `${idsValidos.length} venda(s) deletada(s) com sucesso!` });
+    } catch (error) {
+        console.error('Erro ao deletar vendas em lote:', error);
+        return res.status(500).json({ erro: 'Erro ao deletar dados' });
+    }
+});
+
 app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw({ type: 'application/octet-stream', limit: '50mb' }), async (req, res) => {
     try {
         if (!req.body || req.body.length === 0) {
@@ -698,6 +729,12 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const dados = XLSX.utils.sheet_to_json(worksheet);
 
+        const existentes = await dbAll('SELECT data, LOWER(ecommerce) AS ecommerce FROM sales');
+        const existentesSet = new Set(existentes.map(r => `${r.data}||${r.ecommerce}`));
+
+        let importados = 0;
+        let ignorados = 0;
+
         for (const row of dados) {
             const data = converterData(getCampo(row, ['data']));
             const ecommerce = String(getCampo(row, ['ecommerce']) || '').trim();
@@ -706,13 +743,23 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
 
             if (!data || !ecommerce) continue;
 
+            const chave = `${data}||${ecommerce.toLowerCase()}`;
+            if (existentesSet.has(chave)) {
+                ignorados++;
+                continue;
+            }
+
             await dbRun(
                 'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES ($1, $2, $3, $4, $5)',
                 [data, ecommerce, vendas, receita, req.user.sub]
             );
+            existentesSet.add(chave);
+            importados++;
         }
 
-        return res.json({ sucesso: true, mensagem: `${dados.length} registros importados com sucesso!` });
+        const partes = [`${importados} registro(s) importado(s) com sucesso!`];
+        if (ignorados > 0) partes.push(`${ignorados} registro(s) ignorado(s) por já estarem cadastrados.`);
+        return res.json({ sucesso: true, mensagem: partes.join(' '), importados, ignorados });
     } catch (error) {
         console.error('Erro na importação:', error);
         return res.status(400).json({ erro: 'Erro ao processar arquivo', detalhes: error.message });
