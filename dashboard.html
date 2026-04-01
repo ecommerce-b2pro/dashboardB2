@@ -429,6 +429,117 @@
             box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
         }
 
+        /* ===== MODAIS CUSTOMIZADOS ===== */
+        .custom-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 9000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .custom-modal-overlay.active {
+            display: flex;
+        }
+
+        .custom-modal-box {
+            background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1a 100%);
+            border: 1px solid #4c1d95;
+            border-radius: 14px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(192, 132, 252, 0.15);
+            padding: 32px 28px 24px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            animation: modalEntrar 0.22s ease;
+        }
+
+        @keyframes modalEntrar {
+            from { opacity: 0; transform: scale(0.92) translateY(-12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .custom-modal-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            line-height: 1;
+        }
+
+        .custom-modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e9d5ff;
+            margin-bottom: 10px;
+        }
+
+        .custom-modal-message {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .custom-modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .custom-modal-actions .btn {
+            min-width: 110px;
+        }
+
+        /* Progresso */
+        .progress-modal-box {
+            background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1a 100%);
+            border: 1px solid #4c1d95;
+            border-radius: 14px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(192, 132, 252, 0.15);
+            padding: 32px 28px 24px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            animation: modalEntrar 0.22s ease;
+        }
+
+        .progress-bar-track {
+            background: #0f0a1a;
+            border: 1px solid #4c1d95;
+            border-radius: 999px;
+            height: 18px;
+            overflow: hidden;
+            margin: 20px 0 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #6d28d9, #c084fc);
+            transition: width 0.25s ease;
+            width: 0%;
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: #a78bfa;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e9d5ff;
+            margin-bottom: 6px;
+        }
+
+        .progress-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+
         input[type="checkbox"] {
             width: 18px;
             height: 18px;
@@ -1162,6 +1273,33 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIRMAÇÃO CUSTOMIZADO -->
+    <div id="confirmModal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <div class="custom-modal-icon" id="confirmModalIcon">⚠️</div>
+            <div class="custom-modal-title" id="confirmModalTitle">Confirmar ação</div>
+            <div class="custom-modal-message" id="confirmModalMessage"></div>
+            <div class="custom-modal-actions">
+                <button class="btn btn-secondary" id="confirmModalCancelBtn" onclick="fecharConfirmModal(false)">Cancelar</button>
+                <button class="btn btn-danger" id="confirmModalOkBtn" onclick="fecharConfirmModal(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE PROGRESSO DE EXCLUSÃO -->
+    <div id="progressModal" class="custom-modal-overlay">
+        <div class="progress-modal-box">
+            <div class="custom-modal-icon">🗑️</div>
+            <div class="progress-title" id="progressTitle">Excluindo registros...</div>
+            <div class="progress-subtitle" id="progressSubtitle"></div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <div class="progress-label" id="progressLabel">0%</div>
+            <button class="btn btn-secondary" id="progressCancelBtn" onclick="cancelarExclusao()">✕ Cancelar</button>
+        </div>
+    </div>
+
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -1827,7 +1965,8 @@
                         data: String(obterValorCampo(d, ['data']) || '').trim(),
                         ecommerce: String(obterValorCampo(d, ['ecommerce']) || '').trim(),
                         vendas: parseInt(parseNumero(obterValorCampo(d, ['vendas', 'quantidade'])), 10) || 0,
-                        receita: parseNumero(obterValorCampo(d, ['receita']))
+                        receita: parseNumero(obterValorCampo(d, ['receita'])),
+                        _id: d._id || null
                     })).filter(v => v.data && v.ecommerce);
 
                     // Sempre preencher os e-commerces primeiro para nao depender de grafico/tabela.
@@ -2131,7 +2270,14 @@
         async function recusarUsuario(userId) {
             if (!ehAdmin()) return;
 
-            const confirmou = confirm('Deseja recusar este cadastro?');
+            const confirmou = await mostrarConfirmModal({
+                icone: '❌',
+                titulo: 'Recusar cadastro',
+                mensagem: 'Tem certeza que deseja <strong>recusar</strong> este cadastro? O usuário não terá acesso ao sistema.',
+                textoCancelar: 'Cancelar',
+                textoConfirmar: 'Recusar',
+                classeConfirmar: 'btn-danger'
+            });
             if (!confirmou) return;
 
             const response = await apiFetch(`${API_BASE}/admin/users/${userId}/reject`, {
@@ -2696,6 +2842,9 @@
                     alert('Venda adicionada com sucesso!');
                     limparFormulario();
                     await carregarDados();
+                } else {
+                    const json = await response.json().catch(() => ({}));
+                    alert(json.erro || 'Erro ao adicionar venda');
                 }
             } catch (error) {
                 alert('Erro ao adicionar venda');
@@ -2715,7 +2864,16 @@
                 return;
             }
 
-            if (confirm('Tem certeza que deseja deletar essa venda?')) {
+            const confirmado = await mostrarConfirmModal({
+                icone: '🗑️',
+                titulo: 'Deletar venda',
+                mensagem: 'Tem certeza que deseja deletar essa venda? Esta ação <strong>não pode ser desfeita</strong>.',
+                textoCancelar: 'Cancelar',
+                textoConfirmar: 'Deletar',
+                classeConfirmar: 'btn-danger'
+            });
+
+            if (confirmado) {
                 try {
                     const response = await apiFetch(`${API_BASE}/dados/${index}`, { method: 'DELETE' });
                     if (response.ok) {
@@ -2906,25 +3064,65 @@
                 return;
             }
 
-            const selecionados = Array.from(document.querySelectorAll('.row-checkbox:checked'))
-                .map(cb => parseInt(cb.dataset.index))
-                .sort((a, b) => b - a);
+            const indices = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+                .map(cb => parseInt(cb.dataset.index));
 
-            if (selecionados.length === 0) {
+            if (indices.length === 0) {
                 alert('Selecione pelo menos uma linha para deletar');
                 return;
             }
 
-            if (!confirm(`Tem certeza que deseja deletar ${selecionados.length} linha(s)?`)) {
-                return;
-            }
+            const ids = indices
+                .map(i => vendas[i] && vendas[i]._id)
+                .filter(id => id != null);
+
+            const confirmado = await mostrarConfirmModal({
+                icone: '🗑️',
+                titulo: `Deletar ${ids.length} registro(s)`,
+                mensagem: `Você está prestes a deletar <strong>${ids.length} venda(s)</strong>.<br>Esta ação <strong>não pode ser desfeita</strong>. Deseja continuar?`,
+                textoCancelar: 'Cancelar',
+                textoConfirmar: `Deletar ${ids.length}`,
+                classeConfirmar: 'btn-danger'
+            });
+
+            if (!confirmado) return;
+
+            mostrarProgressModal('Excluindo registros...', `${ids.length} venda(s) selecionada(s)`);
+            atualizarProgressModal(0, ids.length);
 
             try {
-                for (const index of selecionados) {
-                    await apiFetch(`${API_BASE}/dados/${index}`, { method: 'DELETE' });
+                const LOTE = 200;
+                let deletados = 0;
+
+                for (let i = 0; i < ids.length; i += LOTE) {
+                    if (_exclusaoCancelada) break;
+
+                    const loteIds = ids.slice(i, i + LOTE);
+                    await apiFetch(`${API_BASE}/dados`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: loteIds })
+                    });
+
+                    deletados += loteIds.length;
+                    atualizarProgressModal(deletados, ids.length);
                 }
-                await carregarDados();
+
+                if (_exclusaoCancelada) {
+                    document.getElementById('progressTitle').textContent = 'Exclusão cancelada';
+                    document.getElementById('progressSubtitle').textContent = `${deletados} de ${ids.length} registro(s) foram excluídos.`;
+                    document.getElementById('progressCancelBtn').style.display = 'none';
+                    await carregarDados();
+                    setTimeout(fecharProgressModal, 2000);
+                } else {
+                    document.getElementById('progressTitle').textContent = 'Exclusão concluída!';
+                    document.getElementById('progressSubtitle').textContent = `${deletados} venda(s) excluída(s) com sucesso.`;
+                    document.getElementById('progressCancelBtn').style.display = 'none';
+                    await carregarDados();
+                    setTimeout(fecharProgressModal, 1500);
+                }
             } catch (error) {
+                fecharProgressModal();
                 alert('Erro ao deletar registros');
             }
         }
@@ -2959,13 +3157,16 @@
                 });
 
                 if (response.ok) {
-                    alert('Arquivo importado com sucesso!');
+                    const json = await response.json().catch(() => ({}));
+                    const mensagem = json.mensagem || 'Arquivo importado com sucesso!';
+                    alert(mensagem);
                     document.getElementById('fileInput').value = '';
                     document.getElementById('fileName').textContent = '';
                     document.getElementById('importBtn').style.display = 'none';
                     await carregarDados();
                 } else {
-                    alert('Erro ao importar arquivo');
+                    const json = await response.json().catch(() => ({}));
+                    alert(json.erro || 'Erro ao importar arquivo');
                 }
             } catch (error) {
                 alert('Erro ao processar arquivo');
@@ -3168,6 +3369,58 @@
             document.getElementById('calendarModal').classList.remove('active');
         }
 
+        // ===== MODAIS CUSTOMIZADOS =====
+        let _confirmResolve = null;
+        let _exclusaoCancelada = false;
+
+        function mostrarConfirmModal({ icone = '⚠️', titulo, mensagem, textoCancelar = 'Cancelar', textoConfirmar = 'Confirmar', classeConfirmar = 'btn-danger' } = {}) {
+            return new Promise((resolve) => {
+                _confirmResolve = resolve;
+                document.getElementById('confirmModalIcon').textContent = icone;
+                document.getElementById('confirmModalTitle').textContent = titulo || 'Confirmar ação';
+                document.getElementById('confirmModalMessage').innerHTML = mensagem || '';
+                document.getElementById('confirmModalCancelBtn').textContent = textoCancelar;
+                document.getElementById('confirmModalOkBtn').textContent = textoConfirmar;
+                document.getElementById('confirmModalOkBtn').className = `btn ${classeConfirmar}`;
+                document.getElementById('confirmModal').classList.add('active');
+            });
+        }
+
+        function fecharConfirmModal(resultado) {
+            document.getElementById('confirmModal').classList.remove('active');
+            if (_confirmResolve) {
+                _confirmResolve(resultado);
+                _confirmResolve = null;
+            }
+        }
+
+        function mostrarProgressModal(titulo, subtitulo) {
+            _exclusaoCancelada = false;
+            document.getElementById('progressTitle').textContent = titulo || 'Excluindo registros...';
+            document.getElementById('progressSubtitle').textContent = subtitulo || '';
+            document.getElementById('progressBarFill').style.width = '0%';
+            document.getElementById('progressLabel').textContent = '0%';
+            document.getElementById('progressCancelBtn').disabled = false;
+            document.getElementById('progressCancelBtn').textContent = '✕ Cancelar';
+            document.getElementById('progressModal').classList.add('active');
+        }
+
+        function atualizarProgressModal(atual, total) {
+            const pct = total > 0 ? Math.round((atual / total) * 100) : 0;
+            document.getElementById('progressBarFill').style.width = `${pct}%`;
+            document.getElementById('progressLabel').textContent = `${atual} de ${total} (${pct}%)`;
+        }
+
+        function fecharProgressModal() {
+            document.getElementById('progressModal').classList.remove('active');
+        }
+
+        function cancelarExclusao() {
+            _exclusaoCancelada = true;
+            document.getElementById('progressCancelBtn').disabled = true;
+            document.getElementById('progressCancelBtn').textContent = 'Cancelando...';
+        }
+
         document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('fileInput').addEventListener('change', function() {
                 if (this.files[0]) {
@@ -3207,6 +3460,13 @@
             document.getElementById('calendarModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     fecharCalendario();
+                }
+            });
+
+            // Fechar modal de confirmação ao clicar fora
+            document.getElementById('confirmModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    fecharConfirmModal(false);
                 }
             });
         });
