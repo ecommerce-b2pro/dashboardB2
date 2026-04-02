@@ -492,6 +492,15 @@
             min-width: 110px;
         }
 
+        .custom-modal-actions.solo-ok {
+            justify-content: center;
+        }
+
+        .custom-modal-actions.solo-ok .btn {
+            min-width: 160px;
+            justify-content: center;
+        }
+
         /* Progresso */
         .progress-modal-box {
             background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1a 100%);
@@ -1099,12 +1108,15 @@
             background: rgba(15,10,26,0.65);
             border-radius: 10px;
             padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 82px;
         }
 
         .sales-featured-card .sales-stat .stat-label {
             color: #a78bfa;
             font-size: 12px;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .sales-featured-card .sales-stat .stat-value {
@@ -1410,18 +1422,12 @@
             font-weight: 600;
         }
 
-        /* === CARD STATS 4 COLUNAS === */
+        /* === CARD STATS (featured: 2 colunas com último item em span 2) === */
         .sales-featured-card .sales-stats-4 {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             margin-top: 4px;
-        }
-
-        @media (min-width: 520px) {
-            .sales-featured-card .sales-stats-4 {
-                grid-template-columns: repeat(4, 1fr);
-            }
         }
 
         .sales-rank-card .sales-stat-row-4 {
@@ -1439,6 +1445,7 @@
         .sales-rank-card .sales-stat-row-4 .stat-item {
             display: flex;
             flex-direction: column;
+            min-height: 52px;
         }
 
         .sales-rank-card .sales-stat-row-4 .stat-item .stat-lbl {
@@ -1450,6 +1457,69 @@
             color: #ddd6fe;
             font-size: 13px;
             font-weight: 700;
+        }
+        /* === STATS PADRONIZADOS (Qtd. vs Financeiro) === */
+        .stats-section-header {
+            font-size: 11px;
+            color: #a78bfa;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            text-align: center;
+            margin: 12px 0 8px;
+        }
+
+        .stats-section-header-sm {
+            font-size: 10px;
+            margin: 8px 0 5px;
+            text-align: left;
+        }
+
+        /* Qtd de Vendas: valor centralizado na área restante */
+        .stat-qty-body {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Financeiro: R$ + valor empurrados para o fundo */
+        .stat-fin-body {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-currency {
+            color: #a78bfa;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.4;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Versões menores para rank cards */
+        .stat-fin-body-sm {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .stat-currency-sm {
+            color: #a78bfa;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .stat-qty-body-sm {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -1615,6 +1685,10 @@
                         <div class="chart-title">Receita Total por Dia</div>
                         <canvas id="chartRevenueDay"></canvas>
                     </div>
+                    <div class="chart-box">
+                        <div class="chart-title">Vendas Totais por Mês</div>
+                        <canvas id="chartVendasTotalMonth"></canvas>
+                    </div>
                 </div>
 
                 <h3 style="color:#10b981; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🛒 Receita Ecommerce</h3>
@@ -1627,6 +1701,10 @@
                         <div class="chart-title">Receita Ecommerce por Dia</div>
                         <canvas id="chartEcoDay"></canvas>
                     </div>
+                    <div class="chart-box">
+                        <div class="chart-title">Vendas Ecommerce por Mês</div>
+                        <canvas id="chartVendasEcoMonth"></canvas>
+                    </div>
                 </div>
 
                 <h3 style="color:#f59e0b; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🎧 Receita SAC</h3>
@@ -1638,6 +1716,10 @@
                     <div class="chart-box">
                         <div class="chart-title">Receita SAC por Dia</div>
                         <canvas id="chartSacDay"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">Vendas SAC por Mês</div>
+                        <canvas id="chartVendasSacMonth"></canvas>
                     </div>
                 </div>
 
@@ -1731,12 +1813,16 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Quantidade de Vendas</label>
-                        <input type="number" id="formVendas" min="0" required>
+                        <label>Vendas Ecommerce</label>
+                        <input type="number" id="formVendasEco" min="0" required>
                     </div>
                     <div class="form-group">
                         <label>Receita Ecommerce (R$)</label>
                         <input type="number" id="formReceita" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Vendas SAC</label>
+                        <input type="number" id="formVendasSac" min="0" value="0">
                     </div>
                     <div class="form-group">
                         <label>Receita SAC (R$)</label>
@@ -1785,8 +1871,9 @@
                                 </th>
                                 <th class="sort-header" onclick="sortarTabelaDB('data')">Data <span id="sortArrowData" class="sort-arrow">↕</span></th>
                                 <th class="sort-header" onclick="sortarTabelaDB('ecommerce')">Ecommerce <span id="sortArrowEcommerce" class="sort-arrow">↕</span></th>
-                                <th class="sort-header" onclick="sortarTabelaDB('vendas')">Vendas <span id="sortArrowVendas" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('vendas')">Vendas Eco <span id="sortArrowVendas" class="sort-arrow">↕</span></th>
                                 <th class="sort-header" onclick="sortarTabelaDB('receita')">Rec. Ecommerce <span id="sortArrowReceita" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('vendasSac')">Vendas SAC <span id="sortArrowVendasSac" class="sort-arrow">↕</span></th>
                                 <th class="sort-header" onclick="sortarTabelaDB('receitaSac')">Rec. SAC <span id="sortArrowReceitaSac" class="sort-arrow">↕</span></th>
                                 <th>Rec. Total</th>
                                 <th style="width: 80px;">Ação</th>
@@ -2238,7 +2325,8 @@
                     vendas = dados.map(d => ({
                         data: String(obterValorCampo(d, ['data']) || '').trim(),
                         ecommerce: String(obterValorCampo(d, ['ecommerce']) || '').trim(),
-                        vendas: parseInt(parseNumero(obterValorCampo(d, ['vendas', 'quantidade'])), 10) || 0,
+                        vendasEco: parseInt(parseNumero(obterValorCampo(d, ['vendaseco', 'vendas', 'quantidade'])), 10) || 0,
+                        vendasSac: parseInt(parseNumero(obterValorCampo(d, ['vendassac'])), 10) || 0,
                         receita: parseNumero(obterValorCampo(d, ['receitaecommerce', 'receita'])),
                         receitaSac: parseNumero(obterValorCampo(d, ['receitasac'])),
                         receitaTotal: parseNumero(obterValorCampo(d, ['receitatotal'])),
@@ -2387,6 +2475,8 @@
             const topRecHojeTotal = (top.receitaHoje || 0);
             const topRecHojeEco = (top.receitaEcommerceHoje || 0);
             const topRecHojeSac = (top.receitaSacHoje || 0);
+            const topVendasEco = (top.vendasEco || 0);
+            const topVendasSac = (top.vendasSac || 0);
             const topRecEco = (top.receitaEcommerce || top.receita || 0);
             const topRecSac = (top.receitaSac || 0);
             const topRecTotal = (top.receitaTotal || topRecEco + topRecSac);
@@ -2404,22 +2494,40 @@
                         <div class="sales-day-sac-item">SAC: <span>R$ ${topRecHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
                 </div>
+                <div class="stats-section-header">📊 Total do Mês</div>
                 <div class="sales-stats-4">
                     <div class="sales-stat">
-                        <div class="stat-label">Qtd. de Vendas</div>
-                        <div class="stat-value">${top.vendas}</div>
+                        <div class="stat-label">Vendas Eco</div>
+                        <div class="stat-qty-body">
+                            <div class="stat-value">${topVendasEco}</div>
+                        </div>
                     </div>
                     <div class="sales-stat">
                         <div class="stat-label">Rec. Ecommerce</div>
-                        <div class="stat-value">R$ ${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-fin-body">
+                            <div class="stat-currency">R$</div>
+                            <div class="stat-value">${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
+                    </div>
+                    <div class="sales-stat">
+                        <div class="stat-label">Vendas SAC</div>
+                        <div class="stat-qty-body">
+                            <div class="stat-value">${topVendasSac}</div>
+                        </div>
                     </div>
                     <div class="sales-stat">
                         <div class="stat-label">Rec. SAC</div>
-                        <div class="stat-value">R$ ${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-fin-body">
+                            <div class="stat-currency">R$</div>
+                            <div class="stat-value">${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
                     </div>
-                    <div class="sales-stat">
+                    <div class="sales-stat" style="grid-column: span 2;">
                         <div class="stat-label">Rec. Total</div>
-                        <div class="stat-value">R$ ${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-fin-body">
+                            <div class="stat-currency">R$</div>
+                            <div class="stat-value">${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
                     </div>
                 </div>
                 <button class="btn-details" data-eco="${escaparHtml(top.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
@@ -2432,6 +2540,8 @@
                 const recHojeTotal = (item.receitaHoje || 0);
                 const recHojeEco = (item.receitaEcommerceHoje || 0);
                 const recHojeSac = (item.receitaSacHoje || 0);
+                const vendasEco = (item.vendasEco || 0);
+                const vendasSac = (item.vendasSac || 0);
                 const recEco = (item.receitaEcommerce || item.receita || 0);
                 const recSac = (item.receitaSac || 0);
                 const recTotal = (item.receitaTotal || recEco + recSac);
@@ -2449,13 +2559,45 @@
                         <div class="sales-day-sac-item">Eco: <span>R$ ${recHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                         <div class="sales-day-sac-item">SAC: <span>R$ ${recHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
+                    <div class="stats-section-header stats-section-header-sm">📊 Total do Mês</div>
                     <div class="sales-stat-row-4">
-                        <div class="stat-item"><span class="stat-lbl">Qtd. Vendas</span><span class="stat-val">${item.vendas}</span></div>
-                        <div class="stat-item"><span class="stat-lbl">Rec. Ecommerce</span><span class="stat-val">R$ ${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Vendas Eco</span>
+                            <div class="stat-qty-body-sm">
+                                <span class="stat-val">${vendasEco}</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Rec. Ecommerce</span>
+                            <div class="stat-fin-body-sm">
+                                <span class="stat-currency-sm">R$</span>
+                                <span class="stat-val">${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="sales-stat-row-4">
-                        <div class="stat-item"><span class="stat-lbl">Rec. SAC</span><span class="stat-val">R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                        <div class="stat-item"><span class="stat-lbl">Rec. Total</span><span class="stat-val">R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Vendas SAC</span>
+                            <div class="stat-qty-body-sm">
+                                <span class="stat-val">${vendasSac}</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Rec. SAC</span>
+                            <div class="stat-fin-body-sm">
+                                <span class="stat-currency-sm">R$</span>
+                                <span class="stat-val">${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sales-stat-row-4" style="grid-template-columns: 1fr;">
+                        <div class="stat-item">
+                            <span class="stat-lbl">Rec. Total</span>
+                            <div class="stat-fin-body-sm">
+                                <span class="stat-currency-sm">R$</span>
+                                <span class="stat-val">${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </div>
                     <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
                 `;
@@ -2975,7 +3117,7 @@
 
         function atualizarDashboard() {
             const dados = filtrarDados();
-            const totalVendas = dados.reduce((sum, v) => sum + v.vendas, 0);
+            const totalVendas = dados.reduce((sum, v) => sum + (v.vendasEco || 0) + (v.vendasSac || 0), 0);
             const receitaTotal = dados.reduce((sum, v) => sum + (v.receitaTotal || (v.receita + (v.receitaSac || 0))), 0);
 
             document.getElementById('totalVendas').textContent = totalVendas;
@@ -3022,6 +3164,32 @@
                 if (!porEco[v.ecommerce]) porEco[v.ecommerce] = {};
                 porEco[v.ecommerce][key] = (porEco[v.ecommerce][key] || 0) + getCampo(v);
             });
+
+            // Zero-fill: para modo 'dia', preencher todos os dias dos meses com dados até hoje
+            if (modo === 'dia') {
+                const hoje = new Date();
+                const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+                const mesesComDados = new Set();
+                labelsSet.forEach(dateStr => {
+                    if (dateStr && dateStr.length >= 7) {
+                        mesesComDados.add(dateStr.substring(0, 7));
+                    }
+                });
+
+                mesesComDados.forEach(mes => {
+                    const partes = mes.split('-');
+                    const anoN = parseInt(partes[0], 10);
+                    const mesN = parseInt(partes[1], 10);
+                    const daysInMonth = new Date(anoN, mesN, 0).getDate();
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const dateStr = `${partes[0]}-${partes[1]}-${String(d).padStart(2, '0')}`;
+                        if (dateStr <= hojeStr) {
+                            labelsSet.add(dateStr);
+                        }
+                    }
+                });
+            }
 
             const labels = [...labelsSet].sort((a, b) => {
                 // Para modo mes: "MM/YYYY" → comparar como YYYY-MM
@@ -3071,18 +3239,27 @@
         const chartTotal = { mes: { inst: null }, dia: { inst: null } };
         const chartEco   = { mes: { inst: null }, dia: { inst: null } };
         const chartSac   = { mes: { inst: null }, dia: { inst: null } };
+        const chartVendasTotal = { mes: { inst: null } };
+        const chartVendasEco   = { mes: { inst: null } };
+        const chartVendasSac   = { mes: { inst: null } };
 
         function atualizarTodosGraficos(dados) {
-            const getTotal = v => v.receitaTotal || (v.receita + (v.receitaSac || 0));
-            const getEco   = v => v.receita || 0;
-            const getSac   = v => v.receitaSac || 0;
+            const getTotal      = v => v.receitaTotal || (v.receita + (v.receitaSac || 0));
+            const getEco        = v => v.receita || 0;
+            const getSac        = v => v.receitaSac || 0;
+            const getVendasEco  = v => v.vendasEco || 0;
+            const getVendasSac  = v => v.vendasSac || 0;
+            const getVendasTot  = v => (v.vendasEco || 0) + (v.vendasSac || 0);
 
-            construirGrafico('chartRevenueMonth', chartTotal.mes, dados, getTotal, 'mes');
-            construirGrafico('chartRevenueDay',   chartTotal.dia, dados, getTotal, 'dia');
-            construirGrafico('chartEcoMonth',     chartEco.mes,   dados, getEco,   'mes');
-            construirGrafico('chartEcoDay',       chartEco.dia,   dados, getEco,   'dia');
-            construirGrafico('chartSacMonth',     chartSac.mes,   dados, getSac,   'mes');
-            construirGrafico('chartSacDay',       chartSac.dia,   dados, getSac,   'dia');
+            construirGrafico('chartRevenueMonth',    chartTotal.mes,      dados, getTotal,     'mes');
+            construirGrafico('chartRevenueDay',      chartTotal.dia,      dados, getTotal,     'dia');
+            construirGrafico('chartEcoMonth',        chartEco.mes,        dados, getEco,       'mes');
+            construirGrafico('chartEcoDay',          chartEco.dia,        dados, getEco,       'dia');
+            construirGrafico('chartSacMonth',        chartSac.mes,        dados, getSac,       'mes');
+            construirGrafico('chartSacDay',          chartSac.dia,        dados, getSac,       'dia');
+            construirGrafico('chartVendasTotalMonth', chartVendasTotal.mes, dados, getVendasTot, 'mes');
+            construirGrafico('chartVendasEcoMonth',  chartVendasEco.mes,  dados, getVendasEco, 'mes');
+            construirGrafico('chartVendasSacMonth',  chartVendasSac.mes,  dados, getVendasSac, 'mes');
         }
 
         async function gerarComparativo() {
@@ -3113,7 +3290,7 @@
                         mapa[dia] = { vendas: 0, receita: 0 };
                     }
 
-                    mapa[dia].vendas += Number(item.vendas) || 0;
+                    mapa[dia].vendas += (Number(item.vendasEco) || 0) + (Number(item.vendasSac) || 0);
                     mapa[dia].receita += (item.receitaTotal || (Number(item.receita) || 0) + (Number(item.receitaSac) || 0));
                 });
                 return mapa;
@@ -3207,7 +3384,8 @@
 
             const data = document.getElementById('formData').value;
             const ecommerce = document.getElementById('formEcommerce').value;
-            const vendas_qtd = parseInt(document.getElementById('formVendas').value);
+            const vendas_qtd = parseInt(document.getElementById('formVendasEco').value);
+            const vendasSac = parseInt(document.getElementById('formVendasSac').value || '0') || 0;
             const receita = parseFloat(document.getElementById('formReceita').value);
             const receitaSac = parseFloat(document.getElementById('formReceitaSac').value || '0') || 0;
 
@@ -3220,7 +3398,7 @@
                 const response = await apiFetch(`${API_BASE}/dados`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data, ecommerce, vendas: vendas_qtd, receita, receitaSac })
+                    body: JSON.stringify({ data, ecommerce, vendas: vendas_qtd, vendasSac, receita, receitaSac })
                 });
 
                 if (response.ok) {
@@ -3249,11 +3427,15 @@
                             <div style="display:flex;flex-direction:column;gap:10px;text-align:left;">
                                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
                                     <input type="checkbox" id="updateVendas" checked style="width:16px;height:16px;accent-color:#c084fc;">
-                                    Quantidade de Vendas <strong style="color:#c084fc;">(${vendas_qtd})</strong>
+                                    Vendas Ecommerce <strong style="color:#c084fc;">(${vendas_qtd})</strong>
                                 </label>
                                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
                                     <input type="checkbox" id="updateReceita" checked style="width:16px;height:16px;accent-color:#c084fc;">
                                     Receita Ecommerce <strong style="color:#c084fc;">(R$ ${receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
+                                    <input type="checkbox" id="updateVendasSac" checked style="width:16px;height:16px;accent-color:#c084fc;">
+                                    Vendas SAC <strong style="color:#c084fc;">(${vendasSac})</strong>
                                 </label>
                                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
                                     <input type="checkbox" id="updateReceitaSac" checked style="width:16px;height:16px;accent-color:#c084fc;">
@@ -3270,6 +3452,7 @@
                     const payload = {};
                     if (document.getElementById('updateVendas')?.checked) payload.vendas = vendas_qtd;
                     if (document.getElementById('updateReceita')?.checked) payload.receita = receita;
+                    if (document.getElementById('updateVendasSac')?.checked) payload.vendasSac = vendasSac;
                     if (document.getElementById('updateReceitaSac')?.checked) payload.receitaSac = receitaSac;
 
                     if (Object.keys(payload).length === 0) {
@@ -3303,8 +3486,9 @@
         function limparFormulario() {
             document.getElementById('formData').value = '';
             document.getElementById('formEcommerce').value = '';
-            document.getElementById('formVendas').value = '';
+            document.getElementById('formVendasEco').value = '';
             document.getElementById('formReceita').value = '';
+            document.getElementById('formVendasSac').value = '0';
             document.getElementById('formReceitaSac').value = '0';
         }
 
@@ -3374,13 +3558,13 @@
                 dbSortDirecao = dbSortDirecao === 'asc' ? 'desc' : 'asc';
             } else {
                 dbSortColuna = coluna;
-                dbSortDirecao = (coluna === 'receita' || coluna === 'vendas' || coluna === 'receitaSac') ? 'desc' : 'asc';
+                dbSortDirecao = (coluna === 'receita' || coluna === 'vendas' || coluna === 'vendasSac' || coluna === 'receitaSac') ? 'desc' : 'asc';
             }
             atualizarTabelaDados();
         }
 
         function atualizarSetasSort() {
-            const colunas = ['data', 'ecommerce', 'vendas', 'receita', 'receitaSac'];
+            const colunas = ['data', 'ecommerce', 'vendas', 'receita', 'vendasSac', 'receitaSac'];
             colunas.forEach((coluna) => {
                 const nomeCapitalizado = coluna.charAt(0).toUpperCase() + coluna.slice(1);
                 const el = document.getElementById(`sortArrow${nomeCapitalizado}`);
@@ -3409,12 +3593,16 @@
                         valB = (b.v.ecommerce || '').toLowerCase();
                         break;
                     case 'vendas':
-                        valA = a.v.vendas;
-                        valB = b.v.vendas;
+                        valA = a.v.vendasEco || 0;
+                        valB = b.v.vendasEco || 0;
                         break;
                     case 'receita':
                         valA = a.v.receita;
                         valB = b.v.receita;
+                        break;
+                    case 'vendasSac':
+                        valA = a.v.vendasSac || 0;
+                        valB = b.v.vendasSac || 0;
                         break;
                     case 'receitaSac':
                         valA = a.v.receitaSac || 0;
@@ -3481,8 +3669,9 @@
                         </td>
                         <td>${formatarData(v.data)}</td>
                         <td>${escaparHtml(v.ecommerce)}</td>
-                        <td>${v.vendas}</td>
+                        <td>${v.vendasEco || 0}</td>
                         <td>R$ ${v.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td>${v.vendasSac || 0}</td>
                         <td>R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                         <td>R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                         <td>${acaoCell}</td>
@@ -3643,16 +3832,31 @@
         }
 
         function exportarDados() {
-            const ws = XLSX.utils.json_to_sheet(vendas.map(v => {
+            const dataFiltro = document.getElementById('dbFilterData').value;
+            const dataInicioFiltro = document.getElementById('dbFilterDataInicio').value;
+            const dataFimFiltro = document.getElementById('dbFilterDataFim').value;
+            const ecommerceFiltro = document.getElementById('dbFilterEcommerce').value;
+
+            const vendasFiltradas = vendas.filter(v => {
+                if (dataFiltro && v.data !== dataFiltro) return false;
+                if (dataInicioFiltro && v.data < dataInicioFiltro) return false;
+                if (dataFimFiltro && v.data > dataFimFiltro) return false;
+                if (ecommerceFiltro && v.ecommerce !== ecommerceFiltro) return false;
+                return true;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(vendasFiltradas.map(v => {
                 const recSac = v.receitaSac || 0;
-                const recTotal = v.receitaTotal || (v.receita + recSac);
+                const recEcommerce = v.receita || 0;
+                const recTotal = v.receitaTotal || (recEcommerce + recSac);
                 return {
-                    Data: formatarData(v.data),
-                    Ecommerce: v.ecommerce,
-                    Vendas: v.vendas,
-                    Receita: v.receita,
-                    Receita_SAC: recSac,
-                    Receita_Total: recTotal
+                    'Data': formatarData(v.data),
+                    'Ecommerce': v.ecommerce,
+                    'Vendas Ecommerce': v.vendasEco || 0,
+                    'Receita Ecommerce': recEcommerce,
+                    'Vendas SAC': v.vendasSac || 0,
+                    'Receita SAC': recSac,
+                    'Receita Total': recTotal
                 };
             }));
 
@@ -3858,6 +4062,8 @@
                 document.getElementById('confirmModalCancelBtn').style.display = apenasOk ? 'none' : '';
                 document.getElementById('confirmModalOkBtn').textContent = textoConfirmar;
                 document.getElementById('confirmModalOkBtn').className = `btn ${classeConfirmar}`;
+                const actionsEl = document.querySelector('#confirmModal .custom-modal-actions');
+                if (actionsEl) actionsEl.classList.toggle('solo-ok', apenasOk);
                 document.getElementById('confirmModal').classList.add('active');
             });
         }
@@ -4000,19 +4206,21 @@
                     return;
                 }
 
-                let totalVendas = 0, totalRecEco = 0, totalRecSac = 0, totalRecTotal = 0;
+                let totalVendasEco = 0, totalVendasSac = 0, totalRecEco = 0, totalRecSac = 0, totalRecTotal = 0;
                 let linhas = itens.map(item => {
-                    totalVendas += item.vendas;
-                    totalRecEco += item.receitaEcommerce;
-                    totalRecSac += item.receitaSac;
-                    totalRecTotal += item.receitaTotal;
+                    totalVendasEco += item.vendasEco || 0;
+                    totalVendasSac += item.vendasSac || 0;
+                    totalRecEco += item.receitaEcommerce || 0;
+                    totalRecSac += item.receitaSac || 0;
+                    totalRecTotal += item.receitaTotal || 0;
                     return `
                         <tr>
                             <td>${formatarData(item.data)}</td>
-                            <td>${item.vendas}</td>
-                            <td>R$ ${item.receitaEcommerce.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td>R$ ${item.receitaSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td>R$ ${item.receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td>${item.vendasEco || 0}</td>
+                            <td>R$ ${(item.receitaEcommerce || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td>${item.vendasSac || 0}</td>
+                            <td>R$ ${(item.receitaSac || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td>R$ ${(item.receitaTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                         </tr>
                     `;
                 }).join('');
@@ -4022,8 +4230,9 @@
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th>Vendas</th>
+                                <th>Vendas Eco</th>
                                 <th>Rec. Ecommerce</th>
+                                <th>Vendas SAC</th>
                                 <th>Rec. SAC</th>
                                 <th>Rec. Total</th>
                             </tr>
@@ -4032,8 +4241,9 @@
                             ${linhas}
                             <tr class="total-row">
                                 <td>Total</td>
-                                <td>${totalVendas}</td>
+                                <td>${totalVendasEco}</td>
                                 <td>R$ ${totalRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td>${totalVendasSac}</td>
                                 <td>R$ ${totalRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                 <td>R$ ${totalRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                             </tr>
