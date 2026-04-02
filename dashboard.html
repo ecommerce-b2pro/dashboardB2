@@ -143,6 +143,7 @@
 
         .container.sidebar-collapsed .main-content {
             margin-left: 0;
+            padding-top: 62px;
         }
 
         /* Barra superior para viewer (sem sidebar) */
@@ -366,27 +367,10 @@
             color: #c084fc;
         }
 
-        .charts-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
         .charts-grid-2col {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .chart-box-full {
-            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
-            padding: 25px;
-            border-radius: 14px;
-            border: 1px solid rgba(196, 132, 252, 0.4);
-            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
-            backdrop-filter: blur(4px);
             margin-bottom: 30px;
         }
 
@@ -399,11 +383,64 @@
             backdrop-filter: blur(4px);
         }
 
+        .chart-box canvas {
+            height: 320px !important;
+            width: 100% !important;
+        }
+
+        .chart-box.expanded {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999;
+            border-radius: 0;
+            margin: 0;
+            padding: 24px 28px 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chart-box.expanded canvas {
+            flex: 1;
+            height: 0 !important;
+            min-height: 0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         .chart-title {
             color: #c084fc;
             font-size: 18px;
-            margin-bottom: 20px;
             font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        .chart-expand-btn {
+            background: transparent;
+            border: 1px solid rgba(192, 132, 252, 0.4);
+            color: #c084fc;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .chart-expand-btn:hover {
+            background: #2d1b69;
         }
 
         .comparison-filters {
@@ -728,12 +765,12 @@
                 padding: 20px;
             }
 
-            .page-header h1 {
-                font-size: 24px;
+            .container.sidebar-collapsed .main-content {
+                padding-top: 62px;
             }
 
-            .charts-container {
-                grid-template-columns: 1fr;
+            .page-header h1 {
+                font-size: 24px;
             }
 
             .charts-grid-2col {
@@ -746,6 +783,14 @@
 
             .comparison-filters-inner {
                 grid-template-columns: 1fr;
+            }
+
+            .chart-box canvas {
+                height: 250px !important;
+            }
+
+            .chart-box.expanded canvas {
+                height: 0 !important;
             }
         }
 
@@ -1873,50 +1918,56 @@
                 </div>
 
                 <h3 style="color:#c084fc; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">📊 Receita Total</h3>
-                <div class="charts-container">
+                <div class="charts-grid-2col">
                     <div class="chart-box">
-                        <div class="chart-title">Receita Total por Mês</div>
+                        <div class="chart-header">
+                            <div class="chart-title">Receita Total por Mês</div>
+                            <button class="chart-expand-btn" onclick="expandirGrafico('chartRevenueMonth')" title="Expandir" aria-label="Expandir gráfico de Receita Total por Mês">⛶</button>
+                        </div>
                         <canvas id="chartRevenueMonth"></canvas>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title">Receita Total por Dia</div>
+                        <div class="chart-header">
+                            <div class="chart-title">Receita Total por Dia</div>
+                            <button class="chart-expand-btn" onclick="expandirGrafico('chartRevenueDay')" title="Expandir" aria-label="Expandir gráfico de Receita Total por Dia">⛶</button>
+                        </div>
                         <canvas id="chartRevenueDay"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <div class="chart-title">Vendas Totais por Mês</div>
-                        <canvas id="chartVendasTotalMonth"></canvas>
                     </div>
                 </div>
 
                 <h3 style="color:#10b981; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🛒 Receita Ecommerce</h3>
                 <div class="charts-grid-2col">
                     <div class="chart-box">
-                        <div class="chart-title">Receita Ecommerce por Mês</div>
+                        <div class="chart-header">
+                            <div class="chart-title">Receita Ecommerce por Mês</div>
+                            <button class="chart-expand-btn" onclick="expandirGrafico('chartEcoMonth')" title="Expandir" aria-label="Expandir gráfico de Receita Ecommerce por Mês">⛶</button>
+                        </div>
                         <canvas id="chartEcoMonth"></canvas>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title">Vendas Ecommerce por Mês</div>
-                        <canvas id="chartVendasEcoMonth"></canvas>
+                        <div class="chart-header">
+                            <div class="chart-title">Receita Ecommerce por Dia</div>
+                            <button class="chart-expand-btn" onclick="expandirGrafico('chartEcoDay')" title="Expandir" aria-label="Expandir gráfico de Receita Ecommerce por Dia">⛶</button>
+                        </div>
+                        <canvas id="chartEcoDay"></canvas>
                     </div>
-                </div>
-                <div class="chart-box-full">
-                    <div class="chart-title">Receita Ecommerce por Dia</div>
-                    <canvas id="chartEcoDay"></canvas>
                 </div>
 
                 <h3 style="color:#f59e0b; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🎧 Receita SAC</h3>
-                <div class="charts-container">
+                <div class="charts-grid-2col">
                     <div class="chart-box">
-                        <div class="chart-title">Receita SAC por Mês</div>
+                        <div class="chart-header">
+                            <div class="chart-title">Receita SAC por Mês</div>
+                            <button class="chart-expand-btn" onclick="expandirGrafico('chartSacMonth')" title="Expandir" aria-label="Expandir gráfico de Receita SAC por Mês">⛶</button>
+                        </div>
                         <canvas id="chartSacMonth"></canvas>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title">Receita SAC por Dia</div>
+                        <div class="chart-header">
+                            <div class="chart-title">Receita SAC por Dia</div>
+                            <button class="chart-expand-btn" onclick="expandirGrafico('chartSacDay')" title="Expandir" aria-label="Expandir gráfico de Receita SAC por Dia">⛶</button>
+                        </div>
                         <canvas id="chartSacDay"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <div class="chart-title">Vendas SAC por Mês</div>
-                        <canvas id="chartVendasSacMonth"></canvas>
                     </div>
                 </div>
 
@@ -3510,6 +3561,7 @@
                 data: { labels, datasets },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { labels: { color: '#93c5fd' } } },
                     scales: {
                         y: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } },
@@ -3522,27 +3574,46 @@
         const chartTotal = { mes: { inst: null }, dia: { inst: null } };
         const chartEco   = { mes: { inst: null }, dia: { inst: null } };
         const chartSac   = { mes: { inst: null }, dia: { inst: null } };
-        const chartVendasTotal = { mes: { inst: null } };
-        const chartVendasEco   = { mes: { inst: null } };
-        const chartVendasSac   = { mes: { inst: null } };
+
+        const chartRefs = {
+            'chartRevenueMonth': () => chartTotal.mes,
+            'chartRevenueDay':   () => chartTotal.dia,
+            'chartEcoMonth':     () => chartEco.mes,
+            'chartEcoDay':       () => chartEco.dia,
+            'chartSacMonth':     () => chartSac.mes,
+            'chartSacDay':       () => chartSac.dia,
+        };
+
+        function expandirGrafico(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const box = canvas.closest('.chart-box');
+            const isExpanding = !box.classList.contains('expanded');
+            box.classList.toggle('expanded', isExpanding);
+            const btn = box.querySelector('.chart-expand-btn');
+            if (btn) {
+                const label = isExpanding ? 'Recolher' : 'Expandir';
+                btn.title = label;
+                btn.setAttribute('aria-label', label + ' gráfico');
+            }
+            const getRef = chartRefs[canvasId];
+            if (getRef) {
+                const ref = getRef();
+                if (ref && ref.inst) setTimeout(() => ref.inst.resize(), 30);
+            }
+        }
 
         function atualizarTodosGraficos(dados) {
-            const getTotal      = v => v.receitaTotal || (v.receita + (v.receitaSac || 0));
-            const getEco        = v => v.receita || 0;
-            const getSac        = v => v.receitaSac || 0;
-            const getVendasEco  = v => v.vendasEco || 0;
-            const getVendasSac  = v => v.vendasSac || 0;
-            const getVendasTot  = v => (v.vendasEco || 0) + (v.vendasSac || 0);
+            const getTotal = v => v.receitaTotal || (v.receita + (v.receitaSac || 0));
+            const getEco   = v => v.receita || 0;
+            const getSac   = v => v.receitaSac || 0;
 
-            construirGrafico('chartRevenueMonth',    chartTotal.mes,      dados, getTotal,     'mes');
-            construirGrafico('chartRevenueDay',      chartTotal.dia,      dados, getTotal,     'dia');
-            construirGrafico('chartEcoMonth',        chartEco.mes,        dados, getEco,       'mes');
-            construirGrafico('chartEcoDay',          chartEco.dia,        dados, getEco,       'dia');
-            construirGrafico('chartSacMonth',        chartSac.mes,        dados, getSac,       'mes');
-            construirGrafico('chartSacDay',          chartSac.dia,        dados, getSac,       'dia');
-            construirGrafico('chartVendasTotalMonth', chartVendasTotal.mes, dados, getVendasTot, 'mes');
-            construirGrafico('chartVendasEcoMonth',  chartVendasEco.mes,  dados, getVendasEco, 'mes');
-            construirGrafico('chartVendasSacMonth',  chartVendasSac.mes,  dados, getVendasSac, 'mes');
+            construirGrafico('chartRevenueMonth', chartTotal.mes, dados, getTotal, 'mes');
+            construirGrafico('chartRevenueDay',   chartTotal.dia, dados, getTotal, 'dia');
+            construirGrafico('chartEcoMonth',     chartEco.mes,   dados, getEco,   'mes');
+            construirGrafico('chartEcoDay',       chartEco.dia,   dados, getEco,   'dia');
+            construirGrafico('chartSacMonth',     chartSac.mes,   dados, getSac,   'mes');
+            construirGrafico('chartSacDay',       chartSac.dia,   dados, getSac,   'dia');
         }
 
         async function gerarComparativo() {
@@ -4656,6 +4727,25 @@
             document.getElementById('createUserModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     fecharModalCriarUsuario();
+                }
+            });
+
+            // Fechar gráfico expandido com Escape ou clique fora do canvas
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.chart-box.expanded').forEach(box => {
+                        box.classList.remove('expanded');
+                        const btn = box.querySelector('.chart-expand-btn');
+                        if (btn) btn.title = 'Expandir';
+                        const canvas = box.querySelector('canvas');
+                        if (canvas) {
+                            const getRef = chartRefs[canvas.id];
+                            if (getRef) {
+                                const ref = getRef();
+                                if (ref && ref.inst) setTimeout(() => ref.inst.resize(), 30);
+                            }
+                        }
+                    });
                 }
             });
         });
