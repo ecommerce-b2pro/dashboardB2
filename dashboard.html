@@ -1224,6 +1224,233 @@
             color: #c084fc;
             opacity: 1;
         }
+
+        /* === BOTÃO + ADICIONAR ECOMMERCE === */
+        .ecommerce-field-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ecommerce-field-wrapper select {
+            flex: 1;
+        }
+
+        .btn-add-ecommerce {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+            padding: 0;
+        }
+
+        .btn-add-ecommerce:hover {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transform: scale(1.08);
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.5);
+        }
+
+        /* === MODAL DE DETALHES === */
+        .details-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            z-index: 9100;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .details-modal-overlay.active {
+            display: flex;
+        }
+
+        .details-modal-box {
+            background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1a 100%);
+            border: 1px solid #4c1d95;
+            border-radius: 16px;
+            box-shadow: 0 12px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(192, 132, 252, 0.18);
+            padding: 28px 24px 20px;
+            width: 100%;
+            max-width: 680px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            animation: modalEntrar 0.22s ease;
+        }
+
+        .details-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .details-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e9d5ff;
+        }
+
+        .details-modal-close {
+            background: none;
+            border: none;
+            color: #a78bfa;
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .details-modal-close:hover {
+            color: #e9d5ff;
+            background: rgba(192, 132, 252, 0.12);
+        }
+
+        .details-modal-body {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .details-modal-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-modal-table th {
+            padding: 10px 14px;
+            text-align: left;
+            color: #c084fc;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 2px solid #4c1d95;
+            background: rgba(15, 10, 26, 0.5);
+            position: sticky;
+            top: 0;
+        }
+
+        .details-modal-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(76, 29, 149, 0.4);
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .details-modal-table tbody tr:hover {
+            background: rgba(45, 27, 105, 0.3);
+        }
+
+        .details-modal-table .total-row td {
+            font-weight: 700;
+            color: #ddd6fe;
+            border-top: 2px solid #4c1d95;
+            border-bottom: none;
+            background: rgba(45, 27, 105, 0.25);
+        }
+
+        .details-modal-empty {
+            text-align: center;
+            color: #a78bfa;
+            padding: 32px 0;
+            font-size: 15px;
+        }
+
+        /* === BOTÃO DETALHES NOS CARDS === */
+        .btn-details {
+            margin-top: 14px;
+            width: 100%;
+            padding: 9px 0;
+            background: rgba(192, 132, 252, 0.12);
+            border: 1px solid rgba(192, 132, 252, 0.35);
+            border-radius: 8px;
+            color: #c084fc;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-details:hover {
+            background: rgba(192, 132, 252, 0.22);
+            border-color: rgba(192, 132, 252, 0.6);
+            color: #e9d5ff;
+        }
+
+        /* === CARD HOJE - BREAKDOWN SAC === */
+        .sales-day-sac-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 6px;
+        }
+
+        .sales-day-sac-item {
+            font-size: 12px;
+            color: #a78bfa;
+        }
+
+        .sales-day-sac-item span {
+            color: #c4b5fd;
+            font-weight: 600;
+        }
+
+        /* === CARD STATS 4 COLUNAS === */
+        .sales-featured-card .sales-stats-4 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        @media (min-width: 520px) {
+            .sales-featured-card .sales-stats-4 {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .sales-rank-card .sales-stat-row-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(196,132,252,0.1);
+        }
+
+        .sales-rank-card .sales-stat-row-4:last-child {
+            border-bottom: none;
+        }
+
+        .sales-rank-card .sales-stat-row-4 .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sales-rank-card .sales-stat-row-4 .stat-item .stat-lbl {
+            color: #a78bfa;
+            font-size: 11px;
+        }
+
+        .sales-rank-card .sales-stat-row-4 .stat-item .stat-val {
+            color: #ddd6fe;
+            font-size: 13px;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -1297,6 +1524,19 @@
             </div>
             <div class="progress-label" id="progressLabel">0%</div>
             <button class="btn btn-secondary" id="progressCancelBtn" onclick="cancelarExclusao()">✕ Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALHES DO ECOMMERCE -->
+    <div id="detailsModal" class="details-modal-overlay">
+        <div class="details-modal-box">
+            <div class="details-modal-header">
+                <div class="details-modal-title" id="detailsModalTitle">Detalhes</div>
+                <button class="details-modal-close" onclick="fecharDetalhesModal()">✕</button>
+            </div>
+            <div class="details-modal-body">
+                <div id="detailsModalContent"></div>
+            </div>
         </div>
     </div>
 
@@ -1454,17 +1694,24 @@
                     </div>
                     <div class="form-group">
                         <label>Ecommerce</label>
-                        <select id="formEcommerce" required>
-                            <option value="">Selecione...</option>
-                        </select>
+                        <div class="ecommerce-field-wrapper">
+                            <select id="formEcommerce" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                            <button type="button" class="btn-add-ecommerce" title="Adicionar novo ecommerce" onclick="adicionarNovoEcommerce()">+</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Quantidade de Vendas</label>
                         <input type="number" id="formVendas" min="0" required>
                     </div>
                     <div class="form-group">
-                        <label>Receita (R$)</label>
+                        <label>Receita Ecommerce (R$)</label>
                         <input type="number" id="formReceita" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Receita SAC (R$)</label>
+                        <input type="number" id="formReceitaSac" min="0" step="0.01" value="0">
                     </div>
                     <div class="form-buttons">
                         <button class="btn btn-primary" onclick="adicionarVenda()">➕ Adicionar Venda</button>
@@ -1510,7 +1757,9 @@
                                 <th class="sort-header" onclick="sortarTabelaDB('data')">Data <span id="sortArrowData" class="sort-arrow">↕</span></th>
                                 <th class="sort-header" onclick="sortarTabelaDB('ecommerce')">Ecommerce <span id="sortArrowEcommerce" class="sort-arrow">↕</span></th>
                                 <th class="sort-header" onclick="sortarTabelaDB('vendas')">Vendas <span id="sortArrowVendas" class="sort-arrow">↕</span></th>
-                                <th class="sort-header" onclick="sortarTabelaDB('receita')">Receita <span id="sortArrowReceita" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('receita')">Rec. Ecommerce <span id="sortArrowReceita" class="sort-arrow">↕</span></th>
+                                <th class="sort-header" onclick="sortarTabelaDB('receitaSac')">Rec. SAC <span id="sortArrowReceitaSac" class="sort-arrow">↕</span></th>
+                                <th>Rec. Total</th>
                                 <th style="width: 80px;">Ação</th>
                             </tr>
                         </thead>
@@ -1961,7 +2210,9 @@
                         data: String(obterValorCampo(d, ['data']) || '').trim(),
                         ecommerce: String(obterValorCampo(d, ['ecommerce']) || '').trim(),
                         vendas: parseInt(parseNumero(obterValorCampo(d, ['vendas', 'quantidade'])), 10) || 0,
-                        receita: parseNumero(obterValorCampo(d, ['receita'])),
+                        receita: parseNumero(obterValorCampo(d, ['receitaecommerce', 'receita'])),
+                        receitaSac: parseNumero(obterValorCampo(d, ['receitasac'])),
+                        receitaTotal: parseNumero(obterValorCampo(d, ['receitatotal'])),
                         _id: d._id || null
                     })).filter(v => v.data && v.ecommerce);
 
@@ -2087,6 +2338,7 @@
             const itens = data.itens || [];
             const hojeStr = data.hoje || '';
             const hojeLabel = hojeStr ? `Receita de hoje (${formatarData(hojeStr)})` : 'Receita de hoje';
+            const mesRef = data.mesReferencia || '';
 
             const featuredWrapper = document.getElementById('salesFeaturedWrapper');
             const rankingGrid = document.getElementById('salesRankingGrid');
@@ -2101,8 +2353,15 @@
             }
             noDataEl.style.display = 'none';
 
-            // Card destaque — loja top 1 em receita
+            // Card destaque — loja top 1 em receita total
             const top = itens[0];
+            const topRecHojeTotal = (top.receitaHoje || 0);
+            const topRecHojeEco = (top.receitaEcommerceHoje || 0);
+            const topRecHojeSac = (top.receitaSacHoje || 0);
+            const topRecEco = (top.receitaEcommerce || top.receita || 0);
+            const topRecSac = (top.receitaSac || 0);
+            const topRecTotal = (top.receitaTotal || topRecEco + topRecSac);
+
             const featuredCard = document.createElement('div');
             featuredCard.className = 'sales-featured-card';
             featuredCard.innerHTML = `
@@ -2110,24 +2369,44 @@
                 <div class="store-name">${escaparHtml(top.ecommerce)}</div>
                 <div class="sales-day-highlight">
                     <div class="day-label">${escaparHtml(hojeLabel)}</div>
-                    <div class="day-value">R$ ${(top.receitaHoje || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div class="day-value">R$ ${topRecHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div class="sales-day-sac-row">
+                        <div class="sales-day-sac-item">Eco: <span>R$ ${topRecHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="sales-day-sac-item">SAC: <span>R$ ${topRecHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                    </div>
                 </div>
-                <div class="sales-stats">
+                <div class="sales-stats-4">
                     <div class="sales-stat">
                         <div class="stat-label">Qtd. de Vendas</div>
                         <div class="stat-value">${top.vendas}</div>
                     </div>
                     <div class="sales-stat">
-                        <div class="stat-label">Receita Total</div>
-                        <div class="stat-value">R$ ${(top.receita || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-label">Rec. Ecommerce</div>
+                        <div class="stat-value">R$ ${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div class="sales-stat">
+                        <div class="stat-label">Rec. SAC</div>
+                        <div class="stat-value">R$ ${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div class="sales-stat">
+                        <div class="stat-label">Rec. Total</div>
+                        <div class="stat-value">R$ ${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                     </div>
                 </div>
+                <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(escaparHtml(top.ecommerce))}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
             `;
             featuredWrapper.appendChild(featuredCard);
 
             // Cards das demais lojas (ranking)
             for (let i = 1; i < itens.length; i++) {
                 const item = itens[i];
+                const recHojeTotal = (item.receitaHoje || 0);
+                const recHojeEco = (item.receitaEcommerceHoje || 0);
+                const recHojeSac = (item.receitaSacHoje || 0);
+                const recEco = (item.receitaEcommerce || item.receita || 0);
+                const recSac = (item.receitaSac || 0);
+                const recTotal = (item.receitaTotal || recEco + recSac);
+
                 const card = document.createElement('div');
                 card.className = 'sales-rank-card';
                 card.innerHTML = `
@@ -2135,16 +2414,21 @@
                     <div class="store-name">${escaparHtml(item.ecommerce)}</div>
                     <div class="sales-day-highlight">
                         <span class="day-label">${escaparHtml(hojeLabel)}</span>
-                        <span class="day-value">R$ ${(item.receitaHoje || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span class="day-value">R$ ${recHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <div class="sales-stat-row">
-                        <span>Qtd. de Vendas</span>
-                        <strong>${item.vendas}</strong>
+                    <div class="sales-day-sac-row" style="margin-bottom:8px;">
+                        <div class="sales-day-sac-item">Eco: <span>R$ ${recHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="sales-day-sac-item">SAC: <span>R$ ${recHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
-                    <div class="sales-stat-row">
-                        <span>Receita Total</span>
-                        <strong>R$ ${(item.receita || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    <div class="sales-stat-row-4">
+                        <div class="stat-item"><span class="stat-lbl">Qtd. Vendas</span><span class="stat-val">${item.vendas}</span></div>
+                        <div class="stat-item"><span class="stat-lbl">Rec. Ecommerce</span><span class="stat-val">R$ ${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
+                    <div class="sales-stat-row-4">
+                        <div class="stat-item"><span class="stat-lbl">Rec. SAC</span><span class="stat-val">R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="stat-item"><span class="stat-lbl">Rec. Total</span><span class="stat-val">R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                    </div>
+                    <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(escaparHtml(item.ecommerce))}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
                 `;
                 rankingGrid.appendChild(card);
             }
@@ -2637,7 +2921,7 @@
         function atualizarDashboard() {
             const dados = filtrarDados();
             const totalVendas = dados.reduce((sum, v) => sum + v.vendas, 0);
-            const receitaTotal = dados.reduce((sum, v) => sum + v.receita, 0);
+            const receitaTotal = dados.reduce((sum, v) => sum + (v.receitaTotal || (v.receita + (v.receitaSac || 0))), 0);
 
             document.getElementById('totalVendas').textContent = totalVendas;
             document.getElementById('receitaTotal').textContent = `R$ ${receitaTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -2654,17 +2938,18 @@
             dados.forEach(v => {
                 const [ano, mes] = v.data.split('-');
                 const mesAno = `${mes}/${ano}`;
+                const recTotal = v.receitaTotal || (v.receita + (v.receitaSac || 0));
                 if (!meses[mesAno]) {
                     meses[mesAno] = 0;
                 }
                 if (!mesesEcommerce[v.ecommerce]) {
                     mesesEcommerce[v.ecommerce] = {};
                 }
-                meses[mesAno] += v.receita;
+                meses[mesAno] += recTotal;
                 if (!mesesEcommerce[v.ecommerce][mesAno]) {
                     mesesEcommerce[v.ecommerce][mesAno] = 0;
                 }
-                mesesEcommerce[v.ecommerce][mesAno] += v.receita;
+                mesesEcommerce[v.ecommerce][mesAno] += recTotal;
             });
 
             const labels = Object.keys(meses).sort();
@@ -2675,7 +2960,7 @@
             const chartType = isSingleMonth ? 'bar' : 'line';
             
             const datasets = ecommerces.map((ecommerce, index) => {
-                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
                 const dataset = {
                     label: ecommerce,
                     data: labels.map(mes => mesesEcommerce[ecommerce]?.[mes] || 0),
@@ -2715,24 +3000,25 @@
             const diasEcommerce = {};
 
             dados.forEach(v => {
+                const recTotal = v.receitaTotal || (v.receita + (v.receitaSac || 0));
                 if (!dias[v.data]) {
                     dias[v.data] = 0;
                 }
                 if (!diasEcommerce[v.ecommerce]) {
                     diasEcommerce[v.ecommerce] = {};
                 }
-                dias[v.data] += v.receita;
+                dias[v.data] += recTotal;
                 if (!diasEcommerce[v.ecommerce][v.data]) {
                     diasEcommerce[v.ecommerce][v.data] = 0;
                 }
-                diasEcommerce[v.ecommerce][v.data] += v.receita;
+                diasEcommerce[v.ecommerce][v.data] += recTotal;
             });
 
             const labels = Object.keys(dias).sort();
             
             const ecommerces = [...new Set(dados.map(v => v.ecommerce))];
             const datasets = ecommerces.map((ecommerce, index) => {
-                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
                 return {
                     label: ecommerce,
                     data: labels.map(dia => diasEcommerce[ecommerce]?.[dia] || 0),
@@ -2789,7 +3075,7 @@
                     }
 
                     mapa[dia].vendas += Number(item.vendas) || 0;
-                    mapa[dia].receita += Number(item.receita) || 0;
+                    mapa[dia].receita += (item.receitaTotal || (Number(item.receita) || 0) + (Number(item.receitaSac) || 0));
                 });
                 return mapa;
             };
@@ -2884,9 +3170,10 @@
             const ecommerce = document.getElementById('formEcommerce').value;
             const vendas_qtd = parseInt(document.getElementById('formVendas').value);
             const receita = parseFloat(document.getElementById('formReceita').value);
+            const receitaSac = parseFloat(document.getElementById('formReceitaSac').value || '0') || 0;
 
-            if (!data || !ecommerce || !vendas_qtd || !receita) {
-                alert('Por favor, preencha todos os campos');
+            if (!data || !ecommerce || !vendas_qtd || isNaN(receita)) {
+                alert('Por favor, preencha todos os campos obrigatórios');
                 return;
             }
 
@@ -2894,7 +3181,7 @@
                 const response = await apiFetch(`${API_BASE}/dados`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data, ecommerce, vendas: vendas_qtd, receita })
+                    body: JSON.stringify({ data, ecommerce, vendas: vendas_qtd, receita, receitaSac })
                 });
 
                 if (response.ok) {
@@ -2915,6 +3202,7 @@
             document.getElementById('formEcommerce').value = '';
             document.getElementById('formVendas').value = '';
             document.getElementById('formReceita').value = '';
+            document.getElementById('formReceitaSac').value = '0';
         }
 
         async function deletarVenda(index) {
@@ -2983,13 +3271,13 @@
                 dbSortDirecao = dbSortDirecao === 'asc' ? 'desc' : 'asc';
             } else {
                 dbSortColuna = coluna;
-                dbSortDirecao = (coluna === 'receita' || coluna === 'vendas') ? 'desc' : 'asc';
+                dbSortDirecao = (coluna === 'receita' || coluna === 'vendas' || coluna === 'receitaSac') ? 'desc' : 'asc';
             }
             atualizarTabelaDados();
         }
 
         function atualizarSetasSort() {
-            const colunas = ['data', 'ecommerce', 'vendas', 'receita'];
+            const colunas = ['data', 'ecommerce', 'vendas', 'receita', 'receitaSac'];
             colunas.forEach((coluna) => {
                 const nomeCapitalizado = coluna.charAt(0).toUpperCase() + coluna.slice(1);
                 const el = document.getElementById(`sortArrow${nomeCapitalizado}`);
@@ -3024,6 +3312,10 @@
                     case 'receita':
                         valA = a.v.receita;
                         valB = b.v.receita;
+                        break;
+                    case 'receitaSac':
+                        valA = a.v.receitaSac || 0;
+                        valB = b.v.receitaSac || 0;
                         break;
                     default:
                         return 0;
@@ -3076,6 +3368,9 @@
                     ? `<button class="btn-delete" onclick="deletarVenda(${originalIndex})">🗑️</button>`
                     : '-';
 
+                const recSac = v.receitaSac || 0;
+                const recTotal = v.receitaTotal || (v.receita + recSac);
+
                 const row = `
                     <tr>
                         <td style="text-align: center; padding: 15px;">
@@ -3085,6 +3380,8 @@
                         <td>${escaparHtml(v.ecommerce)}</td>
                         <td>${v.vendas}</td>
                         <td>R$ ${v.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td>R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td>R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                         <td>${acaoCell}</td>
                     </tr>
                 `;
@@ -3243,12 +3540,18 @@
         }
 
         function exportarDados() {
-            const ws = XLSX.utils.json_to_sheet(vendas.map(v => ({
-                Data: formatarData(v.data),  // Converte yyyy-mm-dd para dd/mm/yyyy
-                Ecommerce: v.ecommerce,
-                Vendas: v.vendas,
-                Receita: v.receita
-            })));
+            const ws = XLSX.utils.json_to_sheet(vendas.map(v => {
+                const recSac = v.receitaSac || 0;
+                const recTotal = v.receitaTotal || (v.receita + recSac);
+                return {
+                    Data: formatarData(v.data),
+                    Ecommerce: v.ecommerce,
+                    Vendas: v.vendas,
+                    Receita: v.receita,
+                    Receita_SAC: recSac,
+                    Receita_Total: recTotal
+                };
+            }));
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
@@ -3490,6 +3793,127 @@
             document.getElementById('progressCancelBtn').textContent = 'Cancelando...';
         }
 
+        // ===== ADICIONAR NOVO ECOMMERCE =====
+        function adicionarNovoEcommerce() {
+            const nome = prompt('Digite o nome do novo ecommerce:');
+            if (!nome || !nome.trim()) return;
+
+            const nomeTrimmed = nome.trim();
+            const formSelect = document.getElementById('formEcommerce');
+
+            // Verificar se já existe
+            const existente = Array.from(formSelect.options).find(o => o.value.toLowerCase() === nomeTrimmed.toLowerCase());
+            if (existente) {
+                formSelect.value = existente.value;
+                return;
+            }
+
+            // Adicionar ao dropdown do formulário
+            const opt = document.createElement('option');
+            opt.value = nomeTrimmed;
+            opt.textContent = nomeTrimmed;
+            formSelect.appendChild(opt);
+            formSelect.value = nomeTrimmed;
+
+            // Adicionar também aos outros selects se não existir
+            const selects = ['filterEcommerces', 'comp1Ecommerce', 'comp2Ecommerce', 'dbFilterEcommerce'];
+            selects.forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const jaExiste = Array.from(sel.options).find(o => o.value.toLowerCase() === nomeTrimmed.toLowerCase());
+                if (!jaExiste) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = nomeTrimmed;
+                    newOpt.textContent = nomeTrimmed;
+                    sel.appendChild(newOpt);
+                }
+            });
+        }
+
+        // ===== MODAL DE DETALHES DO ECOMMERCE =====
+        function fecharDetalhesModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        async function abrirDetalhesEcommerce(ecommerce, mesRef) {
+            const modal = document.getElementById('detailsModal');
+            const title = document.getElementById('detailsModalTitle');
+            const content = document.getElementById('detailsModalContent');
+
+            const partes = (mesRef || '').split('-');
+            const ano = partes[0] || '';
+            const mes = partes[1] || '';
+            const mesLabel = (ano && mes) ? ` — ${formatarMesLabel(mesRef)}` : '';
+
+            title.textContent = `${ecommerce}${mesLabel}`;
+            content.innerHTML = '<div class="details-modal-empty">Carregando...</div>';
+            modal.classList.add('active');
+
+            try {
+                const params = new URLSearchParams();
+                if (ano) params.set('ano', ano);
+                if (mes) params.set('mes', mes);
+                params.set('ecommerce', ecommerce);
+
+                const response = await apiFetch(`${API_BASE}/vendas-diarias-ecommerce?${params.toString()}`);
+                if (!response.ok) {
+                    content.innerHTML = '<div class="details-modal-empty">Erro ao carregar dados.</div>';
+                    return;
+                }
+
+                const data = await response.json();
+                const itens = data.itens || [];
+
+                if (itens.length === 0) {
+                    content.innerHTML = '<div class="details-modal-empty">Nenhum dado encontrado para este ecommerce no período.</div>';
+                    return;
+                }
+
+                let totalVendas = 0, totalRecEco = 0, totalRecSac = 0, totalRecTotal = 0;
+                let linhas = itens.map(item => {
+                    totalVendas += item.vendas;
+                    totalRecEco += item.receitaEcommerce;
+                    totalRecSac += item.receitaSac;
+                    totalRecTotal += item.receitaTotal;
+                    return `
+                        <tr>
+                            <td>${formatarData(item.data)}</td>
+                            <td>${item.vendas}</td>
+                            <td>R$ ${item.receitaEcommerce.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td>R$ ${item.receitaSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td>R$ ${item.receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                content.innerHTML = `
+                    <table class="details-modal-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Vendas</th>
+                                <th>Rec. Ecommerce</th>
+                                <th>Rec. SAC</th>
+                                <th>Rec. Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${linhas}
+                            <tr class="total-row">
+                                <td>Total</td>
+                                <td>${totalVendas}</td>
+                                <td>R$ ${totalRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td>R$ ${totalRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td>R$ ${totalRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            } catch (err) {
+                content.innerHTML = '<div class="details-modal-empty">Erro ao carregar dados.</div>';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('fileInput').addEventListener('change', function() {
                 if (this.files[0]) {
@@ -3533,6 +3957,13 @@
             document.getElementById('confirmModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     fecharConfirmModal(false);
+                }
+            });
+
+            // Fechar modal de detalhes ao clicar fora
+            document.getElementById('detailsModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    fecharDetalhesModal();
                 }
             });
         });

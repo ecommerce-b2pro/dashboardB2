@@ -180,6 +180,16 @@ async function garantirColunasControleUsuarios() {
     }
 }
 
+async function garantirColunaReceitaSac() {
+    const temReceitaSac = await dbGet(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'sales' AND column_name = 'receita_sac'"
+    );
+    if (!temReceitaSac) {
+        await dbRun('ALTER TABLE sales ADD COLUMN receita_sac REAL NOT NULL DEFAULT 0');
+        console.log('✅ Coluna receita_sac adicionada à tabela sales.');
+    }
+}
+
 async function inicializarBanco() {
     await dbRun(`
         CREATE TABLE IF NOT EXISTS users (
@@ -201,6 +211,7 @@ async function inicializarBanco() {
             ecommerce TEXT NOT NULL,
             vendas INTEGER NOT NULL,
             receita REAL NOT NULL,
+            receita_sac REAL NOT NULL DEFAULT 0,
             created_by INTEGER,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             FOREIGN KEY(created_by) REFERENCES users(id)
@@ -213,6 +224,7 @@ async function inicializarBanco() {
 
     await garantirColunaUsername();
     await garantirColunasControleUsuarios();
+    await garantirColunaReceitaSac();
 
     const admin = await dbGet('SELECT id FROM users WHERE email = $1', [ADMIN_EMAIL]);
     if (!admin) {
@@ -252,13 +264,14 @@ async function migrarExcelParaBanco() {
             const data = converterData(getCampo(row, ['data']));
             const ecommerce = String(getCampo(row, ['ecommerce']) || '').trim();
             const vendas = parseInt(parseNumero(getCampo(row, ['vendas', 'quantidade'])), 10) || 0;
-            const receita = parseNumero(getCampo(row, ['receita']));
+            const receita = parseNumero(getCampo(row, ['receita', 'receitaecommerce', 'receitaeco']));
+            const receitaSac = parseNumero(getCampo(row, ['receitasac', 'sac', 'receita_sac']));
 
             if (!data || !ecommerce) continue;
 
             await dbRun(
-                'INSERT INTO sales (data, ecommerce, vendas, receita) VALUES ($1, $2, $3, $4)',
-                [data, ecommerce, vendas, receita]
+                'INSERT INTO sales (data, ecommerce, vendas, receita, receita_sac) VALUES ($1, $2, $3, $4, $5)',
+                [data, ecommerce, vendas, receita, receitaSac]
             );
         }
 
@@ -629,12 +642,14 @@ app.patch('/api/admin/users/:id/status', autenticarToken, autorizarRoles('admin'
 
 app.get('/api/dados', autenticarToken, autorizarRoles('admin', 'user'), async (req, res) => {
     try {
-        const rows = await dbAll('SELECT id, data, ecommerce, vendas, receita FROM sales ORDER BY id ASC');
+        const rows = await dbAll('SELECT id, data, ecommerce, vendas, receita, receita_sac FROM sales ORDER BY id ASC');
         const dados = rows.map((row) => ({
             Data: row.data,
             Ecommerce: row.ecommerce,
             Vendas: row.vendas,
-            Receita: row.receita,
+            ReceitaEcommerce: row.receita,
+            ReceitaSac: row.receita_sac || 0,
+            ReceitaTotal: (row.receita || 0) + (row.receita_sac || 0),
             _id: row.id
         }));
         res.json(dados);
@@ -649,7 +664,8 @@ app.post('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res
         const data = converterData(req.body.data);
         const ecommerce = String(req.body.ecommerce || '').trim();
         const vendas = parseInt(req.body.vendas, 10);
-        const receita = parseFloat(req.body.receita);
+        const receita = parseFloat(req.body.receita || req.body.receitaEcommerce || 0);
+        const receitaSac = parseFloat(req.body.receitaSac || 0);
 
         if (!data || !ecommerce || Number.isNaN(vendas) || Number.isNaN(receita)) {
             return res.status(400).json({ erro: 'Dados inválidos' });
@@ -664,8 +680,8 @@ app.post('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res
         }
 
         await dbRun(
-            'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES ($1, $2, $3, $4, $5)',
-            [data, ecommerce, vendas, receita, req.user.sub]
+            'INSERT INTO sales (data, ecommerce, vendas, receita, receita_sac, created_by) VALUES ($1, $2, $3, $4, $5, $6)',
+            [data, ecommerce, vendas, receita, receitaSac, req.user.sub]
         );
 
         return res.json({ sucesso: true, mensagem: 'Venda adicionada com sucesso!' });
@@ -739,7 +755,8 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
             const data = converterData(getCampo(row, ['data']));
             const ecommerce = String(getCampo(row, ['ecommerce']) || '').trim();
             const vendas = parseInt(parseNumero(getCampo(row, ['vendas', 'quantidade'])), 10) || 0;
-            const receita = parseNumero(getCampo(row, ['receita']));
+            const receita = parseNumero(getCampo(row, ['receita', 'receitaecommerce', 'receitaeco']));
+            const receitaSac = parseNumero(getCampo(row, ['receitasac', 'sac', 'receita_sac']));
 
             if (!data || !ecommerce) continue;
 
@@ -750,8 +767,8 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
             }
 
             await dbRun(
-                'INSERT INTO sales (data, ecommerce, vendas, receita, created_by) VALUES ($1, $2, $3, $4, $5)',
-                [data, ecommerce, vendas, receita, req.user.sub]
+                'INSERT INTO sales (data, ecommerce, vendas, receita, receita_sac, created_by) VALUES ($1, $2, $3, $4, $5, $6)',
+                [data, ecommerce, vendas, receita, receitaSac, req.user.sub]
             );
             existentesSet.add(chave);
             importados++;
@@ -782,16 +799,17 @@ app.get('/api/vendas-mes', autenticarToken, async (req, res) => {
         const itens = await dbAll(
             `SELECT ecommerce,
                     SUM(vendas) AS vendas,
-                    SUM(receita) AS receita
+                    SUM(receita) AS receita,
+                    SUM(receita_sac) AS receita_sac
              FROM sales
              WHERE data LIKE $1
              GROUP BY ecommerce
-             ORDER BY receita DESC`,
+             ORDER BY (SUM(receita) + SUM(receita_sac)) DESC`,
             [prefixo + '%']
         );
 
         const itensHoje = await dbAll(
-            `SELECT ecommerce, SUM(receita) AS receita_hoje
+            `SELECT ecommerce, SUM(receita) AS receita_hoje, SUM(receita_sac) AS receita_sac_hoje
              FROM sales
              WHERE data = $1
              GROUP BY ecommerce`,
@@ -800,15 +818,27 @@ app.get('/api/vendas-mes', autenticarToken, async (req, res) => {
 
         const receitaHojeMap = {};
         itensHoje.forEach((item) => {
-            receitaHojeMap[item.ecommerce] = Number(item.receita_hoje) || 0;
+            receitaHojeMap[item.ecommerce] = {
+                receitaHoje: Number(item.receita_hoje) || 0,
+                receitaSacHoje: Number(item.receita_sac_hoje) || 0
+            };
         });
 
-        const resultado = itens.map((item) => ({
-            ecommerce: item.ecommerce,
-            vendas: Number(item.vendas) || 0,
-            receita: Number(item.receita) || 0,
-            receitaHoje: receitaHojeMap[item.ecommerce] || 0
-        }));
+        const resultado = itens.map((item) => {
+            const hojeData = receitaHojeMap[item.ecommerce] || { receitaHoje: 0, receitaSacHoje: 0 };
+            const receitaEco = Number(item.receita) || 0;
+            const receitaSac = Number(item.receita_sac) || 0;
+            return {
+                ecommerce: item.ecommerce,
+                vendas: Number(item.vendas) || 0,
+                receitaEcommerce: receitaEco,
+                receitaSac: receitaSac,
+                receitaTotal: receitaEco + receitaSac,
+                receitaHoje: hojeData.receitaHoje + hojeData.receitaSacHoje,
+                receitaEcommerceHoje: hojeData.receitaHoje,
+                receitaSacHoje: hojeData.receitaSacHoje
+            };
+        });
 
         return res.json({
             mesReferencia: prefixo,
@@ -818,6 +848,50 @@ app.get('/api/vendas-mes', autenticarToken, async (req, res) => {
     } catch (error) {
         console.error('Erro ao buscar vendas do mês:', error);
         return res.status(500).json({ erro: 'Erro ao buscar vendas do mês' });
+    }
+});
+
+app.get('/api/vendas-diarias-ecommerce', autenticarToken, async (req, res) => {
+    try {
+        const anoParam = parseInt(req.query.ano, 10);
+        const mesParam = parseInt(req.query.mes, 10);
+        const ecommerce = String(req.query.ecommerce || '').trim();
+
+        const hoje = new Date();
+        const ano = Number.isFinite(anoParam) && anoParam > 0 ? anoParam : hoje.getFullYear();
+        const mes = Number.isFinite(mesParam) && mesParam >= 1 && mesParam <= 12 ? mesParam : (hoje.getMonth() + 1);
+
+        if (!ecommerce) {
+            return res.status(400).json({ erro: 'Parâmetro ecommerce é obrigatório' });
+        }
+
+        const mesStr = String(mes).padStart(2, '0');
+        const prefixo = `${ano}-${mesStr}`;
+
+        const itens = await dbAll(
+            `SELECT data, vendas, receita, receita_sac
+             FROM sales
+             WHERE data LIKE $1 AND LOWER(ecommerce) = LOWER($2)
+             ORDER BY data ASC`,
+            [prefixo + '%', ecommerce]
+        );
+
+        const resultado = itens.map((item) => {
+            const receitaEco = Number(item.receita) || 0;
+            const receitaSac = Number(item.receita_sac) || 0;
+            return {
+                data: item.data,
+                vendas: Number(item.vendas) || 0,
+                receitaEcommerce: receitaEco,
+                receitaSac: receitaSac,
+                receitaTotal: receitaEco + receitaSac
+            };
+        });
+
+        return res.json({ ecommerce, mesReferencia: prefixo, itens: resultado });
+    } catch (error) {
+        console.error('Erro ao buscar vendas diárias por ecommerce:', error);
+        return res.status(500).json({ erro: 'Erro ao buscar vendas diárias' });
     }
 });
 
@@ -852,7 +926,8 @@ app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
         const itens = await dbAll(
             `SELECT ecommerce,
                     SUM(vendas) AS vendas,
-                    SUM(receita) AS receita
+                    SUM(receita) AS receita,
+                    SUM(receita_sac) AS receita_sac
              FROM sales
              WHERE data = $1
              GROUP BY ecommerce
@@ -861,7 +936,7 @@ app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
         );
 
         const totalVendas = itens.reduce((acc, item) => acc + (Number(item.vendas) || 0), 0);
-        const totalReceita = itens.reduce((acc, item) => acc + (Number(item.receita) || 0), 0);
+        const totalReceita = itens.reduce((acc, item) => acc + (Number(item.receita) || 0) + (Number(item.receita_sac) || 0), 0);
 
         return res.json({
             dataReferencia: dataRef,
@@ -870,7 +945,9 @@ app.get('/api/vendas-dia-anterior', autenticarToken, async (req, res) => {
             itens: itens.map((item) => ({
                 ecommerce: item.ecommerce,
                 vendas: Number(item.vendas) || 0,
-                receita: Number(item.receita) || 0
+                receitaEcommerce: Number(item.receita) || 0,
+                receitaSac: Number(item.receita_sac) || 0,
+                receitaTotal: (Number(item.receita) || 0) + (Number(item.receita_sac) || 0)
             }))
         });
     } catch (error) {
