@@ -1350,6 +1350,50 @@
             font-size: 18px;
         }
 
+        /* === AUTO-REFRESH BADGE & ANIMAÇÃO === */
+        .sales-refresh-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(124, 58, 237, 0.18);
+            border: 1px solid rgba(192, 132, 252, 0.4);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            color: #c4b5fd;
+            margin-bottom: 4px;
+        }
+
+        .sales-refresh-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c084fc;
+            flex-shrink: 0;
+        }
+
+        .sales-refresh-dot.pulsing {
+            animation: dotPulse 1.2s ease-out;
+        }
+
+        @keyframes dotPulse {
+            0%   { transform: scale(1);   background: #c084fc; box-shadow: 0 0 0 0 rgba(192,132,252,0.7); }
+            40%  { transform: scale(1.6); background: #e879f9; box-shadow: 0 0 0 6px rgba(192,132,252,0); }
+            100% { transform: scale(1);   background: #c084fc; box-shadow: 0 0 0 0 rgba(192,132,252,0); }
+        }
+
+        @keyframes salesFlash {
+            0%   { opacity: 1; }
+            20%  { opacity: 0.35; }
+            60%  { opacity: 1; }
+            80%  { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .sales-refresh-flash {
+            animation: salesFlash 0.8s ease-in-out;
+        }
+
         /* === SORT ARROWS - BANCO DE DADOS === */
         .sort-header {
             cursor: pointer;
@@ -2065,8 +2109,12 @@
             </div>
 
             <div id="sales" class="page">
-                <div class="page-header">
-                    <h1>Vendas</h1>
+                <div class="page-header" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                    <h1 style="margin-bottom:0;">Vendas</h1>
+                    <div id="salesAutoRefreshBadge" class="sales-refresh-badge" style="display:none;">
+                        <span class="sales-refresh-dot"></span>
+                        <span id="salesLastUpdatedLabel">Atualizado agora</span>
+                    </div>
                 </div>
 
                 <!-- Filtro de mês -->
@@ -2619,13 +2667,14 @@
         }
 
         function inicializarFiltroVendas() {
+            agendarAutoRefreshVendas();
             carregarMesesDisponiveis().then(meses => {
                 preencherSelectMes('salesMonthFilter', meses);
                 carregarVendasMes();
             });
         }
 
-        async function carregarVendasMes() {
+        async function carregarVendasMes(mostrarFlash) {
             const filtro = document.getElementById('salesMonthFilter');
             if (!filtro || !filtro.value) return;
 
@@ -2636,8 +2685,58 @@
 
                 const data = await response.json();
                 renderizarVendasMes(data);
+                if (mostrarFlash) animarRefreshVendas();
             } catch (error) {
                 console.error('Erro ao carregar vendas do mês:', error);
+            }
+        }
+
+        // === AUTO-REFRESH VENDAS (a cada hora cheia) ===
+        let _salesRefreshTimer = null;
+
+        function agendarAutoRefreshVendas() {
+            if (_salesRefreshTimer) clearTimeout(_salesRefreshTimer);
+            const agora = new Date();
+            const msAteProximaHora = ((60 - agora.getMinutes()) * 60 - agora.getSeconds()) * 1000 - agora.getMilliseconds();
+            _salesRefreshTimer = setTimeout(async () => {
+                await carregarVendasMes(true);
+                agendarAutoRefreshVendas();
+            }, msAteProximaHora);
+        }
+
+        function cancelarAutoRefreshVendas() {
+            if (_salesRefreshTimer) {
+                clearTimeout(_salesRefreshTimer);
+                _salesRefreshTimer = null;
+            }
+        }
+
+        function animarRefreshVendas() {
+            const badge = document.getElementById('salesAutoRefreshBadge');
+            const dot = badge ? badge.querySelector('.sales-refresh-dot') : null;
+            const label = document.getElementById('salesLastUpdatedLabel');
+            const salesPage = document.getElementById('sales');
+
+            // Atualiza horário
+            const agora = new Date();
+            const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            if (label) label.textContent = `Atualizado às ${hora}`;
+            if (badge) badge.style.display = 'inline-flex';
+
+            // Pulsa o dot
+            if (dot) {
+                dot.classList.remove('pulsing');
+                void dot.offsetWidth; // reflow para reiniciar animação
+                dot.classList.add('pulsing');
+                setTimeout(() => dot.classList.remove('pulsing'), 1300);
+            }
+
+            // Flash nos cards
+            if (salesPage) {
+                salesPage.classList.remove('sales-refresh-flash');
+                void salesPage.offsetWidth;
+                salesPage.classList.add('sales-refresh-flash');
+                setTimeout(() => salesPage.classList.remove('sales-refresh-flash'), 900);
             }
         }
 
@@ -3276,6 +3375,8 @@
 
             if (destino === 'sales') {
                 inicializarFiltroVendas();
+            } else {
+                cancelarAutoRefreshVendas();
             }
 
             navegarParaPagina(destino);
