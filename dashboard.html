@@ -1605,14 +1605,39 @@
                     </div>
                 </div>
 
+                <h3 style="color:#c084fc; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">📊 Receita Total</h3>
                 <div class="charts-container">
                     <div class="chart-box">
-                        <div class="chart-title">Receita por Mês</div>
+                        <div class="chart-title">Receita Total por Mês</div>
                         <canvas id="chartRevenueMonth"></canvas>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title">Receita por Dia</div>
+                        <div class="chart-title">Receita Total por Dia</div>
                         <canvas id="chartRevenueDay"></canvas>
+                    </div>
+                </div>
+
+                <h3 style="color:#10b981; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🛒 Receita Ecommerce</h3>
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <div class="chart-title">Receita Ecommerce por Mês</div>
+                        <canvas id="chartEcoMonth"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">Receita Ecommerce por Dia</div>
+                        <canvas id="chartEcoDay"></canvas>
+                    </div>
+                </div>
+
+                <h3 style="color:#f59e0b; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🎧 Receita SAC</h3>
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <div class="chart-title">Receita SAC por Mês</div>
+                        <canvas id="chartSacMonth"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">Receita SAC por Dia</div>
+                        <canvas id="chartSacDay"></canvas>
                     </div>
                 </div>
 
@@ -2926,63 +2951,82 @@
             document.getElementById('totalVendas').textContent = totalVendas;
             document.getElementById('receitaTotal').textContent = `R$ ${receitaTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-            atualizarGraficoRevenueMonth(dados);
-            atualizarGraficoRevenueDay(dados);
+            atualizarTodosGraficos(dados);
         }
 
-        let chartMonth = null;
-        function atualizarGraficoRevenueMonth(dados) {
-            const meses = {};
-            const mesesEcommerce = {};
+        // ===== GRÁFICOS =====
+        const CORES_GRAFICOS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
 
+        /**
+         * Constrói (ou reconstrói) um Chart.js no canvas indicado.
+         * @param {string}   canvasId   - id do elemento <canvas>
+         * @param {object}   chartRef   - objeto com propriedade .inst para guardar a instância
+         * @param {Array}    dados      - array de registros filtrados
+         * @param {Function} getCampo   - (v) => valor numérico a plotar
+         * @param {'mes'|'dia'} modo    - agrupamento temporal
+         */
+        function construirGrafico(canvasId, chartRef, dados, getCampo, modo) {
+            // Calcular totais por ecommerce para ordenar do maior para o menor
+            const totaisPorEco = {};
             dados.forEach(v => {
-                const [ano, mes] = v.data.split('-');
-                const mesAno = `${mes}/${ano}`;
-                const recTotal = v.receitaTotal || (v.receita + (v.receitaSac || 0));
-                if (!meses[mesAno]) {
-                    meses[mesAno] = 0;
-                }
-                if (!mesesEcommerce[v.ecommerce]) {
-                    mesesEcommerce[v.ecommerce] = {};
-                }
-                meses[mesAno] += recTotal;
-                if (!mesesEcommerce[v.ecommerce][mesAno]) {
-                    mesesEcommerce[v.ecommerce][mesAno] = 0;
-                }
-                mesesEcommerce[v.ecommerce][mesAno] += recTotal;
+                totaisPorEco[v.ecommerce] = (totaisPorEco[v.ecommerce] || 0) + getCampo(v);
             });
 
-            const labels = Object.keys(meses).sort();
-            const ecommerces = [...new Set(dados.map(v => v.ecommerce))];
-            
-            // Determinar tipo de gráfico baseado no número de meses
-            const isSingleMonth = labels.length === 1;
+            // Ecommerces ordenados por receita decrescente no período filtrado
+            const ecommercesOrdenados = [...new Set(dados.map(v => v.ecommerce))]
+                .sort((a, b) => (totaisPorEco[b] || 0) - (totaisPorEco[a] || 0));
+
+            // Construir mapa tempo → ecommerce → valor
+            const porEco = {};
+            const labelsSet = new Set();
+
+            dados.forEach(v => {
+                let key;
+                if (modo === 'mes') {
+                    const [ano, mes] = v.data.split('-');
+                    key = `${mes}/${ano}`;
+                } else {
+                    key = v.data;
+                }
+                labelsSet.add(key);
+                if (!porEco[v.ecommerce]) porEco[v.ecommerce] = {};
+                porEco[v.ecommerce][key] = (porEco[v.ecommerce][key] || 0) + getCampo(v);
+            });
+
+            const labels = [...labelsSet].sort((a, b) => {
+                // Para modo mes: "MM/YYYY" → comparar como YYYY-MM
+                if (modo === 'mes') {
+                    const [mA, aA] = a.split('/');
+                    const [mB, aB] = b.split('/');
+                    return `${aA}-${mA}`.localeCompare(`${aB}-${mB}`);
+                }
+                return a.localeCompare(b);
+            });
+
+            const isSingleMonth = modo === 'mes' && labels.length === 1;
             const chartType = isSingleMonth ? 'bar' : 'line';
-            
-            const datasets = ecommerces.map((ecommerce, index) => {
-                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
+
+            const datasets = ecommercesOrdenados.map((eco, index) => {
+                const cor = CORES_GRAFICOS[index % CORES_GRAFICOS.length];
                 const dataset = {
-                    label: ecommerce,
-                    data: labels.map(mes => mesesEcommerce[ecommerce]?.[mes] || 0),
-                    borderColor: cores[index % cores.length],
-                    backgroundColor: cores[index % cores.length] + (isSingleMonth ? 'cc' : '20'),
+                    label: eco,
+                    data: labels.map(k => porEco[eco]?.[k] || 0),
+                    borderColor: cor,
+                    backgroundColor: cor + (isSingleMonth ? 'cc' : '20'),
                     borderWidth: isSingleMonth ? 1 : 3,
                 };
-                
-                // Adicionar configurações específicas para linha
                 if (!isSingleMonth) {
                     dataset.fill = true;
                     dataset.tension = 0.4;
                 }
-                
                 return dataset;
             });
 
-            const ctx = document.getElementById('chartRevenueMonth').getContext('2d');
-            if (chartMonth) chartMonth.destroy();
-            chartMonth = new Chart(ctx, {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartRef.inst) chartRef.inst.destroy();
+            chartRef.inst = new Chart(ctx, {
                 type: chartType,
-                data: { labels: labels, datasets: datasets },
+                data: { labels, datasets },
                 options: {
                     responsive: true,
                     plugins: { legend: { labels: { color: '#93c5fd' } } },
@@ -2994,56 +3038,21 @@
             });
         }
 
-        let chartDay = null;
-        function atualizarGraficoRevenueDay(dados) {
-            const dias = {};
-            const diasEcommerce = {};
+        const chartTotal = { mes: { inst: null }, dia: { inst: null } };
+        const chartEco   = { mes: { inst: null }, dia: { inst: null } };
+        const chartSac   = { mes: { inst: null }, dia: { inst: null } };
 
-            dados.forEach(v => {
-                const recTotal = v.receitaTotal || (v.receita + (v.receitaSac || 0));
-                if (!dias[v.data]) {
-                    dias[v.data] = 0;
-                }
-                if (!diasEcommerce[v.ecommerce]) {
-                    diasEcommerce[v.ecommerce] = {};
-                }
-                dias[v.data] += recTotal;
-                if (!diasEcommerce[v.ecommerce][v.data]) {
-                    diasEcommerce[v.ecommerce][v.data] = 0;
-                }
-                diasEcommerce[v.ecommerce][v.data] += recTotal;
-            });
+        function atualizarTodosGraficos(dados) {
+            const getTotal = v => v.receitaTotal || (v.receita + (v.receitaSac || 0));
+            const getEco   = v => v.receita || 0;
+            const getSac   = v => v.receitaSac || 0;
 
-            const labels = Object.keys(dias).sort();
-            
-            const ecommerces = [...new Set(dados.map(v => v.ecommerce))];
-            const datasets = ecommerces.map((ecommerce, index) => {
-                const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'];
-                return {
-                    label: ecommerce,
-                    data: labels.map(dia => diasEcommerce[ecommerce]?.[dia] || 0),
-                    borderColor: cores[index % cores.length],
-                    backgroundColor: cores[index % cores.length] + '20',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
-                };
-            });
-
-            const ctx = document.getElementById('chartRevenueDay').getContext('2d');
-            if (chartDay) chartDay.destroy();
-            chartDay = new Chart(ctx, {
-                type: 'line',
-                data: { labels: labels, datasets: datasets },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: '#93c5fd' } } },
-                    scales: {
-                        y: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } },
-                        x: { ticks: { color: '#93c5fd' }, grid: { color: '#334155' } }
-                    }
-                }
-            });
+            construirGrafico('chartRevenueMonth', chartTotal.mes, dados, getTotal, 'mes');
+            construirGrafico('chartRevenueDay',   chartTotal.dia, dados, getTotal, 'dia');
+            construirGrafico('chartEcoMonth',     chartEco.mes,   dados, getEco,   'mes');
+            construirGrafico('chartEcoDay',       chartEco.dia,   dados, getEco,   'dia');
+            construirGrafico('chartSacMonth',     chartSac.mes,   dados, getSac,   'mes');
+            construirGrafico('chartSacDay',       chartSac.dia,   dados, getSac,   'dia');
         }
 
         function gerarComparativo() {
