@@ -1134,38 +1134,40 @@
         }
 
         .sales-rank-card {
-            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
-            border: 1px solid rgba(196, 132, 252, 0.25);
-            border-radius: 14px;
-            padding: 20px;
+            background: linear-gradient(135deg, rgba(109,40,217,0.45) 0%, rgba(45,27,105,0.97) 100%);
+            border: 2px solid rgba(196, 132, 252, 0.6);
+            border-radius: 16px;
+            padding: 22px 24px 18px;
             position: relative;
-            box-shadow: 0 6px 24px rgba(3,1,15,0.6), 0 0 20px rgba(192,132,252,0.15);
+            box-shadow: 0 8px 32px rgba(3,1,15,0.8), 0 0 28px rgba(192,132,252,0.35), 0 0 52px rgba(130,66,229,0.18);
         }
 
         .sales-rank-card .rank-number {
             position: absolute;
-            top: 14px;
+            top: -13px;
             right: 16px;
-            font-size: 12px;
-            color: #a78bfa;
+            font-size: 11px;
+            color: white;
             font-weight: 700;
-            background: rgba(192,132,252,0.12);
-            padding: 3px 8px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
+            padding: 3px 12px;
+            border-radius: 16px;
+            letter-spacing: 1px;
+            box-shadow: 0 3px 10px rgba(192,132,252,0.45);
         }
 
         .sales-rank-card .store-name {
             font-size: 18px;
             font-weight: 700;
-            color: #ddd6fe;
+            color: #e9d5ff;
             margin-bottom: 14px;
             padding-right: 40px;
         }
 
         .sales-rank-card .sales-day-highlight {
-            background: rgba(192,132,252,0.1);
-            border: 1px solid rgba(192,132,252,0.28);
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(192,132,252,0.18) 0%, rgba(124,58,237,0.18) 100%);
+            border: 1px solid rgba(192,132,252,0.5);
+            border-radius: 10px;
             padding: 9px 14px;
             margin-bottom: 12px;
             display: flex;
@@ -1433,9 +1435,8 @@
         .sales-rank-card .sales-stat-row-4 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 4px 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(196,132,252,0.1);
+            gap: 8px;
+            padding: 4px 0;
         }
 
         .sales-rank-card .sales-stat-row-4:last-child {
@@ -1446,6 +1447,9 @@
             display: flex;
             flex-direction: column;
             min-height: 52px;
+            background: rgba(15,10,26,0.65);
+            border-radius: 8px;
+            padding: 8px 10px;
         }
 
         .sales-rank-card .sales-stat-row-4 .stat-item .stat-lbl {
@@ -1455,7 +1459,7 @@
 
         .sales-rank-card .sales-stat-row-4 .stat-item .stat-val {
             color: #ddd6fe;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
         }
         /* === STATS PADRONIZADOS (Qtd. vs Financeiro) === */
@@ -1791,10 +1795,6 @@
                         <button class="btn btn-primary" id="importBtn" onclick="handleFileUpload()" style="display: none;">📤 Importar Arquivo</button>
                         <a href="/exemplo_importacao.xlsx" download="exemplo_importacao.xlsx" class="btn btn-secondary" style="text-decoration: none;">📥 Baixar planilha de exemplo</a>
                     </div>
-                </div>
-
-                <div style="margin-top: 15px;">
-                    <button class="btn btn-success" onclick="exportarDados()">💾 Exportar Dados para Excel</button>
                 </div>
 
                 <div class="form-container">
@@ -3829,40 +3829,6 @@
             } catch (error) {
                 await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao processar arquivo.' });
             }
-        }
-
-        function exportarDados() {
-            const dataFiltro = document.getElementById('dbFilterData').value;
-            const dataInicioFiltro = document.getElementById('dbFilterDataInicio').value;
-            const dataFimFiltro = document.getElementById('dbFilterDataFim').value;
-            const ecommerceFiltro = document.getElementById('dbFilterEcommerce').value;
-
-            const vendasFiltradas = vendas.filter(v => {
-                if (dataFiltro && v.data !== dataFiltro) return false;
-                if (dataInicioFiltro && v.data < dataInicioFiltro) return false;
-                if (dataFimFiltro && v.data > dataFimFiltro) return false;
-                if (ecommerceFiltro && v.ecommerce !== ecommerceFiltro) return false;
-                return true;
-            });
-
-            const ws = XLSX.utils.json_to_sheet(vendasFiltradas.map(v => {
-                const recSac = v.receitaSac || 0;
-                const recEcommerce = v.receita || 0;
-                const recTotal = v.receitaTotal || (recEcommerce + recSac);
-                return {
-                    'Data': formatarData(v.data),
-                    'Ecommerce': v.ecommerce,
-                    'Vendas Ecommerce': v.vendasEco || 0,
-                    'Receita Ecommerce': recEcommerce,
-                    'Vendas SAC': v.vendasSac || 0,
-                    'Receita SAC': recSac,
-                    'Receita Total': recTotal
-                };
-            }));
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
-            XLSX.writeFile(wb, 'vendas_backup.xlsx');
         }
 
         // ===== CALENDÁRIO PARA SELEÇÃO DE INTERVALO DE DATAS =====
