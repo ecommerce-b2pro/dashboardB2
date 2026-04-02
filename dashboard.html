@@ -145,6 +145,46 @@
             margin-left: 0;
         }
 
+        /* Barra superior para viewer (sem sidebar) */
+        .viewer-topbar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 150;
+            background: linear-gradient(90deg, #0a0614 0%, #0f0a1a 100%);
+            border-bottom: 1px solid #4c1d95;
+            padding: 10px 24px;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        }
+
+        .viewer-topbar .user-badge-top {
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: rgba(124, 58, 237, 0.16);
+            border: 1px solid rgba(192, 132, 252, 0.35);
+            color: #ddd6fe;
+            font-size: 13px;
+        }
+
+        body.viewer-mode .viewer-topbar {
+            display: flex;
+        }
+
+        body.viewer-mode .sidebar,
+        body.viewer-mode .sidebar-toggle {
+            display: none !important;
+        }
+
+        body.viewer-mode .main-content {
+            margin-left: 0;
+            padding-top: 65px;
+        }
+
         .page {
             display: none;
         }
@@ -157,6 +197,10 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .page-header h1 {
@@ -1208,6 +1252,24 @@
             margin-bottom: 30px;
         }
 
+        /* 2 ecommerces: dois cards iguais lado a lado */
+        .sales-ranking-grid.grid-2-equal {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* 3+ ecommerces: máx 3 por linha, centralizado */
+        .sales-ranking-grid.grid-multi {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            max-width: 1100px;
+            margin: 0 auto 30px;
+            gap: 20px;
+            justify-items: stretch;
+        }
+
         .sales-rank-card {
             background: linear-gradient(135deg, rgba(109,40,217,0.45) 0%, rgba(45,27,105,0.97) 100%);
             border: 2px solid rgba(196, 132, 252, 0.6);
@@ -1725,6 +1787,12 @@
         </div>
     </div>
 
+    <!-- Barra superior para usuários viewer (sem menu lateral) -->
+    <div class="viewer-topbar" id="viewerTopbar">
+        <div class="user-badge-top" id="viewerUserBadge"></div>
+        <button class="btn btn-danger" style="padding:6px 16px;font-size:13px;" onclick="logout()">Sair</button>
+    </div>
+
     <div class="container">
         <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Abrir/Fechar menu">☰</button>
         <aside class="sidebar" id="sidebar">
@@ -2179,13 +2247,15 @@
 
         function atualizarUserBadge() {
             const badge = document.getElementById('userBadge');
+            const viewerBadge = document.getElementById('viewerUserBadge');
+            let texto = 'Não autenticado';
             if (authUser && authUser.username) {
-                badge.textContent = `Usuário: ${authUser.username} (${authUser.role || 'sem perfil'})`;
+                texto = `${authUser.username} (${authUser.role || 'sem perfil'})`;
             } else if (authUser && authUser.email) {
-                badge.textContent = `Usuário: ${authUser.email}`;
-            } else {
-                badge.textContent = 'Não autenticado';
+                texto = authUser.email;
             }
+            if (badge) badge.textContent = `Usuário: ${texto}`;
+            if (viewerBadge) viewerBadge.textContent = texto;
         }
 
         function perfilAtual() {
@@ -2215,6 +2285,13 @@
 
             if (navDashboard) navDashboard.style.display = ehViewer() ? 'none' : 'block';
             if (navDatabase) navDatabase.style.display = ehViewer() ? 'none' : 'block';
+
+            // Viewer: ocultar sidebar e mostrar barra superior com nome e botão Sair
+            if (ehViewer()) {
+                document.body.classList.add('viewer-mode');
+            } else {
+                document.body.classList.remove('viewer-mode');
+            }
 
             const uploadSection = document.querySelector('#database .upload-section');
             const formContainer = document.querySelector('#database .form-container');
@@ -2583,73 +2660,75 @@
             }
             noDataEl.style.display = 'none';
 
-            // Card destaque — loja top 1 em receita total
-            const top = itens[0];
-            const topRecHojeTotal = (top.receitaHoje || 0);
-            const topRecHojeEco = (top.receitaEcommerceHoje || 0);
-            const topRecHojeSac = (top.receitaSacHoje || 0);
-            const topVendasEco = (top.vendasEco || 0);
-            const topVendasSac = (top.vendasSac || 0);
-            const topRecEco = (top.receitaEcommerce || top.receita || 0);
-            const topRecSac = (top.receitaSac || 0);
-            const topRecTotal = (top.receitaTotal || topRecEco + topRecSac);
+            const buildFeaturedCard = (item, rankLabel, isEqual) => {
+                const recHojeTotal = (item.receitaHoje || 0);
+                const recHojeEco = (item.receitaEcommerceHoje || 0);
+                const recHojeSac = (item.receitaSacHoje || 0);
+                const vendasEco = (item.vendasEco || 0);
+                const vendasSac = (item.vendasSac || 0);
+                const recEco = (item.receitaEcommerce || item.receita || 0);
+                const recSac = (item.receitaSac || 0);
+                const recTotal = (item.receitaTotal || recEco + recSac);
 
-            const featuredCard = document.createElement('div');
-            featuredCard.className = 'sales-featured-card';
-            featuredCard.innerHTML = `
-                <div class="rank-badge">🏆 #1 LOJA TOP</div>
-                <div class="store-name">${escaparHtml(top.ecommerce)}</div>
-                <div class="sales-day-highlight">
-                    <div class="day-label">${escaparHtml(hojeLabel)}</div>
-                    <div class="day-value">R$ ${topRecHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                    <div class="sales-day-sac-row">
-                        <div class="sales-day-sac-item">Eco: <span>R$ ${topRecHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                        <div class="sales-day-sac-item">SAC: <span>R$ ${topRecHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                    </div>
-                </div>
-                <div class="stats-section-header">📊 Total do Mês</div>
-                <div class="sales-stats-4">
-                    <div class="sales-stat">
-                        <div class="stat-label">Vendas Eco</div>
-                        <div class="stat-qty-body">
-                            <div class="stat-value">${topVendasEco}</div>
+                const card = document.createElement('div');
+                card.className = 'sales-featured-card';
+                if (isEqual) {
+                    card.style.maxWidth = '100%';
+                    card.style.minWidth = '0';
+                }
+                card.innerHTML = `
+                    <div class="rank-badge">${escaparHtml(rankLabel)}</div>
+                    <div class="store-name">${escaparHtml(item.ecommerce)}</div>
+                    <div class="sales-day-highlight">
+                        <div class="day-label">${escaparHtml(hojeLabel)}</div>
+                        <div class="day-value">R$ ${recHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="sales-day-sac-row">
+                            <div class="sales-day-sac-item">Eco: <span>R$ ${recHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                            <div class="sales-day-sac-item">SAC: <span>R$ ${recHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                         </div>
                     </div>
-                    <div class="sales-stat">
-                        <div class="stat-label">Rec. Ecommerce</div>
-                        <div class="stat-fin-body">
-                            <div class="stat-currency">R$</div>
-                            <div class="stat-value">${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div class="stats-section-header">📊 Total do Mês</div>
+                    <div class="sales-stats-4">
+                        <div class="sales-stat">
+                            <div class="stat-label">Vendas Eco</div>
+                            <div class="stat-qty-body">
+                                <div class="stat-value">${vendasEco}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat">
+                            <div class="stat-label">Rec. Ecommerce</div>
+                            <div class="stat-fin-body">
+                                <div class="stat-currency">R$</div>
+                                <div class="stat-value">${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat">
+                            <div class="stat-label">Vendas SAC</div>
+                            <div class="stat-qty-body">
+                                <div class="stat-value">${vendasSac}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat">
+                            <div class="stat-label">Rec. SAC</div>
+                            <div class="stat-fin-body">
+                                <div class="stat-currency">R$</div>
+                                <div class="stat-value">${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat" style="grid-column: span 2;">
+                            <div class="stat-label">Rec. Total</div>
+                            <div class="stat-fin-body">
+                                <div class="stat-currency">R$</div>
+                                <div class="stat-value">${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="sales-stat">
-                        <div class="stat-label">Vendas SAC</div>
-                        <div class="stat-qty-body">
-                            <div class="stat-value">${topVendasSac}</div>
-                        </div>
-                    </div>
-                    <div class="sales-stat">
-                        <div class="stat-label">Rec. SAC</div>
-                        <div class="stat-fin-body">
-                            <div class="stat-currency">R$</div>
-                            <div class="stat-value">${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        </div>
-                    </div>
-                    <div class="sales-stat" style="grid-column: span 2;">
-                        <div class="stat-label">Rec. Total</div>
-                        <div class="stat-fin-body">
-                            <div class="stat-currency">R$</div>
-                            <div class="stat-value">${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn-details" data-eco="${escaparHtml(top.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
-            `;
-            featuredWrapper.appendChild(featuredCard);
+                    <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
+                `;
+                return card;
+            };
 
-            // Cards das demais lojas (ranking)
-            for (let i = 1; i < itens.length; i++) {
-                const item = itens[i];
+            const buildRankCard = (item, rank) => {
                 const recHojeTotal = (item.receitaHoje || 0);
                 const recHojeEco = (item.receitaEcommerceHoje || 0);
                 const recHojeSac = (item.receitaSacHoje || 0);
@@ -2662,7 +2741,7 @@
                 const card = document.createElement('div');
                 card.className = 'sales-rank-card';
                 card.innerHTML = `
-                    <div class="rank-number">#${i + 1}</div>
+                    <div class="rank-number">#${rank}</div>
                     <div class="store-name">${escaparHtml(item.ecommerce)}</div>
                     <div class="sales-day-highlight">
                         <span class="day-label">${escaparHtml(hojeLabel)}</span>
@@ -2714,7 +2793,30 @@
                     </div>
                     <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
                 `;
-                rankingGrid.appendChild(card);
+                return card;
+            };
+
+            if (itens.length === 1) {
+                // Um único ecommerce: card destaque centralizado
+                featuredWrapper.classList.remove('hidden');
+                featuredWrapper.appendChild(buildFeaturedCard(itens[0], '🏆 #1 LOJA TOP', false));
+
+            } else if (itens.length === 2) {
+                // Dois ecommerces: dois cards iguais lado a lado, sem área featuredWrapper separada
+                featuredWrapper.classList.add('hidden');
+                rankingGrid.className = 'sales-ranking-grid grid-2-equal';
+                rankingGrid.appendChild(buildFeaturedCard(itens[0], '🏆 #1 LOJA TOP', true));
+                rankingGrid.appendChild(buildFeaturedCard(itens[1], '🥈 #2', true));
+
+            } else {
+                // 3+ ecommerces: #1 em destaque, demais no grid multi (máx 3 por linha)
+                featuredWrapper.classList.remove('hidden');
+                featuredWrapper.appendChild(buildFeaturedCard(itens[0], '🏆 #1 LOJA TOP', false));
+
+                rankingGrid.className = 'sales-ranking-grid grid-multi';
+                for (let i = 1; i < itens.length; i++) {
+                    rankingGrid.appendChild(buildRankCard(itens[i], i + 1));
+                }
             }
         }
 
