@@ -40,8 +40,52 @@
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
+            transition: width 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 30px 0;
+        }
+
+        .sidebar.collapsed .sidebar-header,
+        .sidebar.collapsed nav,
+        .sidebar.collapsed .sidebar-footer {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            left: 260px;
+            z-index: 200;
+            background: #2d1b69;
+            border: 1px solid #4c1d95;
+            color: #c084fc;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: left 0.3s ease, background 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .sidebar-toggle:hover {
+            background: #4c1d95;
+        }
+
+        .sidebar.collapsed ~ .sidebar-toggle,
+        .container.sidebar-collapsed .sidebar-toggle {
+            left: 10px;
         }
 
         .sidebar-header {
@@ -94,6 +138,11 @@
             flex: 1;
             padding: 30px;
             overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .container.sidebar-collapsed .main-content {
+            margin-left: 0;
         }
 
         .page {
@@ -258,6 +307,7 @@
             box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
             backdrop-filter: blur(4px);
             border-left: 4px solid #c084fc;
+            text-align: center;
         }
 
         .metric-label {
@@ -276,6 +326,23 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
             gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .charts-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-box-full {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 25px;
+            border-radius: 14px;
+            border: 1px solid rgba(196, 132, 252, 0.4);
+            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
+            backdrop-filter: blur(4px);
             margin-bottom: 30px;
         }
 
@@ -608,6 +675,10 @@
                 width: 200px;
             }
 
+            .sidebar-toggle {
+                left: 210px;
+            }
+
             .main-content {
                 margin-left: 200px;
                 padding: 20px;
@@ -618,6 +689,10 @@
             }
 
             .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid-2col {
                 grid-template-columns: 1fr;
             }
 
@@ -1614,8 +1689,45 @@
         </div>
     </div>
 
+    <!-- MODAL CRIAR USUÁRIO -->
+    <div id="createUserModal" class="custom-modal-overlay">
+        <div class="custom-modal-box" style="min-width: 360px; max-width: 480px;">
+            <div class="custom-modal-icon">👤</div>
+            <div class="custom-modal-title">Criar Usuário</div>
+            <div class="custom-modal-message" style="text-align:left;">
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">Nome de usuário</label>
+                        <input id="createUserUsername" type="text" placeholder="usuario123" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">E-mail</label>
+                        <input id="createUserEmail" type="email" placeholder="email@exemplo.com" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">Senha</label>
+                        <input id="createUserPassword" type="password" placeholder="Mínimo 8 caracteres" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">Tipo de usuário</label>
+                        <select id="createUserRole" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                            <option value="viewer">viewer</option>
+                            <option value="user">user</option>
+                            <option value="admin">admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModalCriarUsuario()">Cancelar</button>
+                <button class="btn btn-success" onclick="confirmarCriarUsuario()">✅ Criar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <aside class="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Abrir/Fechar menu">☰</button>
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1>📊 Hub de Vendas</h1>
             </div>
@@ -1696,19 +1808,19 @@
                 </div>
 
                 <h3 style="color:#10b981; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🛒 Receita Ecommerce</h3>
-                <div class="charts-container">
+                <div class="charts-grid-2col">
                     <div class="chart-box">
                         <div class="chart-title">Receita Ecommerce por Mês</div>
                         <canvas id="chartEcoMonth"></canvas>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title">Receita Ecommerce por Dia</div>
-                        <canvas id="chartEcoDay"></canvas>
-                    </div>
-                    <div class="chart-box">
                         <div class="chart-title">Vendas Ecommerce por Mês</div>
                         <canvas id="chartVendasEcoMonth"></canvas>
                     </div>
+                </div>
+                <div class="chart-box-full">
+                    <div class="chart-title">Receita Ecommerce por Dia</div>
+                    <canvas id="chartEcoDay"></canvas>
                 </div>
 
                 <h3 style="color:#f59e0b; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🎧 Receita SAC</h3>
@@ -1918,6 +2030,7 @@
                     <div class="permissao-aviso">Apenas administradores podem aprovar cadastros, alterar perfil e redefinir senha.</div>
                     <div class="filter-buttons" style="margin-bottom: 12px;">
                         <button class="btn btn-primary" onclick="carregarUsuariosAdmin()">🔄 Atualizar Lista</button>
+                        <button class="btn btn-success" onclick="abrirModalCriarUsuario()">➕ Criar Usuário</button>
                     </div>
                     <div class="table-container" style="margin-bottom: 0;">
                         <table class="admin-table">
@@ -3808,16 +3921,49 @@
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                const response = await apiFetch(`${API_BASE}/importar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/octet-stream' },
-                    body: arrayBuffer
-                });
+
+                const doImport = async (mode) => {
+                    const url = mode === 'update' ? `${API_BASE}/importar?mode=update` : `${API_BASE}/importar`;
+                    return apiFetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/octet-stream' },
+                        body: arrayBuffer
+                    });
+                };
+
+                const response = await doImport('skip');
 
                 if (response.ok) {
                     const json = await response.json().catch(() => ({}));
-                    const mensagem = json.mensagem || 'Arquivo importado com sucesso!';
-                    await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(mensagem), classeConfirmar: 'btn-success' });
+
+                    if (json.ignorados > 0) {
+                        const atualizar = await mostrarConfirmModal({
+                            icone: '🔄',
+                            titulo: 'Registros duplicados encontrados',
+                            mensagem: `Foram encontrados <strong>${json.ignorados}</strong> registro(s) com data e ecommerce já existentes no banco de dados.<br><br>Deseja <strong>atualizar</strong> os dados existentes com os valores da planilha?`,
+                            textoCancelar: 'Não, manter os atuais',
+                            textoConfirmar: 'Sim, atualizar',
+                            classeConfirmar: 'btn-primary'
+                        });
+
+                        if (atualizar) {
+                            const respUpdate = await doImport('update');
+                            if (respUpdate.ok) {
+                                const jsonUpdate = await respUpdate.json().catch(() => ({}));
+                                await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(jsonUpdate.mensagem || 'Arquivo importado e registros atualizados!'), classeConfirmar: 'btn-success' });
+                            } else {
+                                const jsonErr = await respUpdate.json().catch(() => ({}));
+                                await mostrarAlerta({ icone: '❌', titulo: 'Erro na atualização', mensagem: escaparHtml(jsonErr.erro || 'Erro ao atualizar registros.') });
+                            }
+                        } else if (json.importados > 0) {
+                            await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(json.mensagem || 'Arquivo importado com sucesso!'), classeConfirmar: 'btn-success' });
+                        } else {
+                            await mostrarAlerta({ icone: 'ℹ️', titulo: 'Nenhum registro novo', mensagem: escaparHtml(json.mensagem || 'Todos os registros já existem no banco.') });
+                        }
+                    } else {
+                        await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(json.mensagem || 'Arquivo importado com sucesso!'), classeConfirmar: 'btn-success' });
+                    }
+
                     document.getElementById('fileInput').value = '';
                     document.getElementById('fileName').textContent = '';
                     document.getElementById('importBtn').style.display = 'none';
@@ -4017,6 +4163,68 @@
         // ===== MODAIS CUSTOMIZADOS =====
         let _confirmResolve = null;
         let _exclusaoCancelada = false;
+
+        // ===== SIDEBAR TOGGLE =====
+        function toggleSidebar() {
+            const container = document.querySelector('.container');
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const collapsed = container.classList.toggle('sidebar-collapsed');
+            sidebar.classList.toggle('collapsed', collapsed);
+            toggle.textContent = collapsed ? '☰' : '✕';
+            toggle.style.left = collapsed ? '10px' : '260px';
+        }
+
+        // ===== CRIAR USUÁRIO (ADMIN) =====
+        function abrirModalCriarUsuario() {
+            document.getElementById('createUserUsername').value = '';
+            document.getElementById('createUserEmail').value = '';
+            document.getElementById('createUserPassword').value = '';
+            document.getElementById('createUserRole').value = 'viewer';
+            document.getElementById('createUserModal').classList.add('active');
+            setTimeout(() => document.getElementById('createUserUsername').focus(), 50);
+        }
+
+        function fecharModalCriarUsuario() {
+            document.getElementById('createUserModal').classList.remove('active');
+        }
+
+        async function confirmarCriarUsuario() {
+            const username = document.getElementById('createUserUsername').value.trim();
+            const email = document.getElementById('createUserEmail').value.trim();
+            const password = document.getElementById('createUserPassword').value;
+            const role = document.getElementById('createUserRole').value;
+
+            if (!username || !email || !password) {
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Campos obrigatórios', mensagem: 'Preencha todos os campos.' });
+                return;
+            }
+
+            if (password.length < 8) {
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Senha fraca', mensagem: 'A senha deve ter ao menos 8 caracteres.' });
+                return;
+            }
+
+            fecharModalCriarUsuario();
+
+            try {
+                const response = await apiFetch(`${API_BASE}/admin/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password, role })
+                });
+
+                if (response.ok) {
+                    await mostrarAlerta({ icone: '✅', titulo: 'Usuário criado', mensagem: 'Usuário criado com sucesso.', classeConfirmar: 'btn-success' });
+                    await carregarUsuariosAdmin();
+                } else {
+                    const erro = await response.json().catch(() => ({}));
+                    await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: escaparHtml(erro.erro || 'Não foi possível criar o usuário.') });
+                }
+            } catch (error) {
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao comunicar com o servidor.' });
+            }
+        }
 
         function mostrarConfirmModal({ icone = '⚠️', titulo, mensagem, textoCancelar = 'Cancelar', textoConfirmar = 'Confirmar', classeConfirmar = 'btn-danger', apenasOk = false } = {}) {
             return new Promise((resolve) => {
@@ -4271,6 +4479,13 @@
             document.getElementById('detailsModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     fecharDetalhesModal();
+                }
+            });
+
+            // Fechar modal criar usuário ao clicar fora
+            document.getElementById('createUserModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    fecharModalCriarUsuario();
                 }
             });
         });
