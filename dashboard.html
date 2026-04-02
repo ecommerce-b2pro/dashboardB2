@@ -498,6 +498,7 @@
 
         .custom-modal-actions.solo-ok .btn {
             min-width: 160px;
+            justify-content: center;
         }
 
         /* Progresso */
@@ -1107,12 +1108,15 @@
             background: rgba(15,10,26,0.65);
             border-radius: 10px;
             padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 82px;
         }
 
         .sales-featured-card .sales-stat .stat-label {
             color: #a78bfa;
             font-size: 12px;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .sales-featured-card .sales-stat .stat-value {
@@ -1447,6 +1451,7 @@
         .sales-rank-card .sales-stat-row-4 .stat-item {
             display: flex;
             flex-direction: column;
+            min-height: 52px;
         }
 
         .sales-rank-card .sales-stat-row-4 .stat-item .stat-lbl {
@@ -1458,6 +1463,69 @@
             color: #ddd6fe;
             font-size: 13px;
             font-weight: 700;
+        }
+        /* === STATS PADRONIZADOS (Qtd. vs Financeiro) === */
+        .stats-section-header {
+            font-size: 11px;
+            color: #a78bfa;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            text-align: center;
+            margin: 12px 0 8px;
+        }
+
+        .stats-section-header-sm {
+            font-size: 10px;
+            margin: 8px 0 5px;
+            text-align: left;
+        }
+
+        /* Qtd de Vendas: valor centralizado na área restante */
+        .stat-qty-body {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Financeiro: R$ + valor empurrados para o fundo */
+        .stat-fin-body {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-currency {
+            color: #a78bfa;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.4;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Versões menores para rank cards */
+        .stat-fin-body-sm {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .stat-currency-sm {
+            color: #a78bfa;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .stat-qty-body-sm {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -2412,22 +2480,34 @@
                         <div class="sales-day-sac-item">SAC: <span>R$ ${topRecHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
                 </div>
+                <div class="stats-section-header">📊 Total do Mês</div>
                 <div class="sales-stats-4">
                     <div class="sales-stat">
                         <div class="stat-label">Qtd. de Vendas</div>
-                        <div class="stat-value">${top.vendas}</div>
+                        <div class="stat-qty-body">
+                            <div class="stat-value">${top.vendas}</div>
+                        </div>
                     </div>
                     <div class="sales-stat">
                         <div class="stat-label">Rec. Ecommerce</div>
-                        <div class="stat-value">R$ ${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-fin-body">
+                            <div class="stat-currency">R$</div>
+                            <div class="stat-value">${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
                     </div>
                     <div class="sales-stat">
                         <div class="stat-label">Rec. SAC</div>
-                        <div class="stat-value">R$ ${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-fin-body">
+                            <div class="stat-currency">R$</div>
+                            <div class="stat-value">${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
                     </div>
                     <div class="sales-stat">
                         <div class="stat-label">Rec. Total</div>
-                        <div class="stat-value">R$ ${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="stat-fin-body">
+                            <div class="stat-currency">R$</div>
+                            <div class="stat-value">${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        </div>
                     </div>
                 </div>
                 <button class="btn-details" data-eco="${escaparHtml(top.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
@@ -2457,13 +2537,37 @@
                         <div class="sales-day-sac-item">Eco: <span>R$ ${recHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                         <div class="sales-day-sac-item">SAC: <span>R$ ${recHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
+                    <div class="stats-section-header stats-section-header-sm">📊 Total do Mês</div>
                     <div class="sales-stat-row-4">
-                        <div class="stat-item"><span class="stat-lbl">Qtd. Vendas</span><span class="stat-val">${item.vendas}</span></div>
-                        <div class="stat-item"><span class="stat-lbl">Rec. Ecommerce</span><span class="stat-val">R$ ${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Qtd. Vendas</span>
+                            <div class="stat-qty-body-sm">
+                                <span class="stat-val">${item.vendas}</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Rec. Ecommerce</span>
+                            <div class="stat-fin-body-sm">
+                                <span class="stat-currency-sm">R$</span>
+                                <span class="stat-val">${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="sales-stat-row-4">
-                        <div class="stat-item"><span class="stat-lbl">Rec. SAC</span><span class="stat-val">R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                        <div class="stat-item"><span class="stat-lbl">Rec. Total</span><span class="stat-val">R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Rec. SAC</span>
+                            <div class="stat-fin-body-sm">
+                                <span class="stat-currency-sm">R$</span>
+                                <span class="stat-val">${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-lbl">Rec. Total</span>
+                            <div class="stat-fin-body-sm">
+                                <span class="stat-currency-sm">R$</span>
+                                <span class="stat-val">${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </div>
                     <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
                 `;
@@ -3880,6 +3984,8 @@
                 document.getElementById('confirmModalCancelBtn').style.display = apenasOk ? 'none' : '';
                 document.getElementById('confirmModalOkBtn').textContent = textoConfirmar;
                 document.getElementById('confirmModalOkBtn').className = `btn ${classeConfirmar}`;
+                const actionsEl = document.querySelector('#confirmModal .custom-modal-actions');
+                if (actionsEl) actionsEl.classList.toggle('solo-ok', apenasOk);
                 document.getElementById('confirmModal').classList.add('active');
             });
         }
