@@ -1705,10 +1705,14 @@
                         <label for="fileInput" class="file-input-label">📁 Selecionar Arquivo Excel</label>
                     </div>
                     <div class="file-name" id="fileName"></div>
-                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-primary" id="importBtn" onclick="handleFileUpload()" style="display: none;">📤 Importar Arquivo</button>
-                        <button class="btn btn-success" onclick="exportarDados()">💾 Exportar Dados para Excel</button>
+                        <a href="/exemplo_importacao.xlsx" download="exemplo_importacao.xlsx" class="btn btn-secondary" style="text-decoration: none;">📥 Baixar planilha de exemplo</a>
                     </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-success" onclick="exportarDados()">💾 Exportar Dados para Excel</button>
                 </div>
 
                 <div class="form-container">
@@ -2418,7 +2422,7 @@
                         <div class="stat-value">R$ ${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                     </div>
                 </div>
-                <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(escaparHtml(top.ecommerce))}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
+                <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(top.ecommerce)}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
             `;
             featuredWrapper.appendChild(featuredCard);
 
@@ -2453,7 +2457,7 @@
                         <div class="stat-item"><span class="stat-lbl">Rec. SAC</span><span class="stat-val">R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                         <div class="stat-item"><span class="stat-lbl">Rec. Total</span><span class="stat-val">R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
-                    <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(escaparHtml(item.ecommerce))}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
+                    <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(item.ecommerce)}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
                 `;
                 rankingGrid.appendChild(card);
             }
