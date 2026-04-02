@@ -62,7 +62,7 @@
         .sidebar-toggle {
             position: fixed;
             top: 15px;
-            left: 260px;
+            left: 218px;
             z-index: 200;
             background: #2d1b69;
             border: 1px solid #4c1d95;
@@ -720,7 +720,7 @@
             }
 
             .sidebar-toggle {
-                left: 210px;
+                left: 168px;
             }
 
             .main-content {
@@ -1164,7 +1164,7 @@
             background: linear-gradient(135deg, rgba(109,40,217,0.45) 0%, rgba(45,27,105,0.97) 100%);
             border: 2px solid rgba(196, 132, 252, 0.6);
             border-radius: 20px;
-            padding: 40px 52px;
+            padding: 24px 52px;
             min-width: 340px;
             max-width: 580px;
             width: 100%;
@@ -1173,27 +1173,11 @@
             position: relative;
         }
 
-        .sales-featured-card .rank-badge {
-            position: absolute;
-            top: -16px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
-            color: white;
-            font-weight: 700;
-            font-size: 12px;
-            padding: 5px 20px;
-            border-radius: 20px;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 14px rgba(192,132,252,0.5);
-            white-space: nowrap;
-        }
-
         .sales-featured-card .store-name {
             font-size: 30px;
             font-weight: 700;
             color: #e9d5ff;
-            margin: 10px 0 22px;
+            margin: 0 0 22px;
         }
 
         .sales-featured-card .sales-day-highlight {
@@ -1279,26 +1263,11 @@
             box-shadow: 0 8px 32px rgba(3,1,15,0.8), 0 0 28px rgba(192,132,252,0.35), 0 0 52px rgba(130,66,229,0.18);
         }
 
-        .sales-rank-card .rank-number {
-            position: absolute;
-            top: -13px;
-            right: 16px;
-            font-size: 11px;
-            color: white;
-            font-weight: 700;
-            background: linear-gradient(135deg, #c084fc 0%, #7c3aed 100%);
-            padding: 3px 12px;
-            border-radius: 16px;
-            letter-spacing: 1px;
-            box-shadow: 0 3px 10px rgba(192,132,252,0.45);
-        }
-
         .sales-rank-card .store-name {
             font-size: 18px;
             font-weight: 700;
             color: #e9d5ff;
             margin-bottom: 14px;
-            padding-right: 40px;
         }
 
         .sales-rank-card .sales-day-highlight {
@@ -1838,8 +1807,8 @@
     </div>
 
     <div class="container">
-        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Abrir/Fechar menu">☰</button>
         <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Abrir/Fechar menu" aria-label="Abrir/Fechar menu lateral">✕</button>
             <div class="sidebar-header">
                 <h1>📊 Hub de Vendas</h1>
             </div>
@@ -2669,7 +2638,7 @@
         function inicializarFiltroVendas() {
             agendarAutoRefreshVendas();
             carregarMesesDisponiveis().then(meses => {
-                preencherSelectMes('salesMonthFilter', meses);
+                preencherSelectMes('salesMonthFilter', meses, null); // null força seleção do mês mais recente
                 carregarVendasMes();
             });
         }
@@ -2776,7 +2745,6 @@
                     card.style.minWidth = '0';
                 }
                 card.innerHTML = `
-                    <div class="rank-badge">${escaparHtml(rankLabel)}</div>
                     <div class="store-name">${escaparHtml(item.ecommerce)}</div>
                     <div class="sales-day-highlight">
                         <div class="day-label">${escaparHtml(hojeLabel)}</div>
@@ -2840,7 +2808,6 @@
                 const card = document.createElement('div');
                 card.className = 'sales-rank-card';
                 card.innerHTML = `
-                    <div class="rank-number">#${rank}</div>
                     <div class="store-name">${escaparHtml(item.ecommerce)}</div>
                     <div class="sales-day-highlight">
                         <span class="day-label">${escaparHtml(hojeLabel)}</span>
@@ -4375,7 +4342,7 @@
             const collapsed = container.classList.toggle('sidebar-collapsed');
             sidebar.classList.toggle('collapsed', collapsed);
             toggle.textContent = collapsed ? '☰' : '✕';
-            toggle.style.left = collapsed ? '10px' : '260px';
+            toggle.style.left = collapsed ? '10px' : '218px';
         }
 
         // ===== CRIAR USUÁRIO (ADMIN) =====
