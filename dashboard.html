@@ -492,6 +492,14 @@
             min-width: 110px;
         }
 
+        .custom-modal-actions.solo-ok {
+            justify-content: center;
+        }
+
+        .custom-modal-actions.solo-ok .btn {
+            min-width: 160px;
+        }
+
         /* Progresso */
         .progress-modal-box {
             background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1a 100%);
@@ -3643,16 +3651,30 @@
         }
 
         function exportarDados() {
-            const ws = XLSX.utils.json_to_sheet(vendas.map(v => {
+            const dataFiltro = document.getElementById('dbFilterData').value;
+            const dataInicioFiltro = document.getElementById('dbFilterDataInicio').value;
+            const dataFimFiltro = document.getElementById('dbFilterDataFim').value;
+            const ecommerceFiltro = document.getElementById('dbFilterEcommerce').value;
+
+            const vendasFiltradas = vendas.filter(v => {
+                if (dataFiltro && v.data !== dataFiltro) return false;
+                if (dataInicioFiltro && v.data < dataInicioFiltro) return false;
+                if (dataFimFiltro && v.data > dataFimFiltro) return false;
+                if (ecommerceFiltro && v.ecommerce !== ecommerceFiltro) return false;
+                return true;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(vendasFiltradas.map(v => {
                 const recSac = v.receitaSac || 0;
-                const recTotal = v.receitaTotal || (v.receita + recSac);
+                const recEcommerce = v.receita || 0;
+                const recTotal = v.receitaTotal || (recEcommerce + recSac);
                 return {
-                    Data: formatarData(v.data),
-                    Ecommerce: v.ecommerce,
-                    Vendas: v.vendas,
-                    Receita: v.receita,
-                    Receita_SAC: recSac,
-                    Receita_Total: recTotal
+                    'Data': formatarData(v.data),
+                    'Ecommerce': v.ecommerce,
+                    'Vendas': v.vendas || 0,
+                    'Receita Ecommerce': recEcommerce,
+                    'Receita SAC': recSac,
+                    'Receita Total': recTotal
                 };
             }));
 
