@@ -676,7 +676,7 @@ app.post('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res
             [data, ecommerce]
         );
         if (duplicado) {
-            return res.status(409).json({ erro: `Já existe uma venda para o ecommerce "${ecommerce}" na data ${data}. Cada ecommerce só pode ter uma venda por dia.` });
+            return res.status(409).json({ erro: `Já existe uma venda para o ecommerce "${ecommerce}" na data ${data}. Cada ecommerce só pode ter uma venda por dia.`, id: duplicado.id });
         }
 
         await dbRun(
@@ -688,6 +688,49 @@ app.post('/api/dados', autenticarToken, autorizarRoles('admin'), async (req, res
     } catch (error) {
         console.error('Erro ao adicionar venda:', error);
         return res.status(500).json({ erro: 'Erro ao salvar dados' });
+    }
+});
+
+app.put('/api/dados/:id', autenticarToken, autorizarRoles('admin'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (!Number.isFinite(id) || id <= 0) {
+            return res.status(400).json({ erro: 'ID inválido' });
+        }
+
+        const campos = [];
+        const valores = [];
+
+        if (req.body.vendas !== undefined) {
+            const v = parseInt(req.body.vendas, 10);
+            if (!Number.isFinite(v)) return res.status(400).json({ erro: 'Quantidade de vendas inválida' });
+            valores.push(v);
+            campos.push(`vendas = $${valores.length}`);
+        }
+        if (req.body.receita !== undefined) {
+            const r = parseFloat(req.body.receita);
+            if (!Number.isFinite(r)) return res.status(400).json({ erro: 'Receita inválida' });
+            valores.push(r);
+            campos.push(`receita = $${valores.length}`);
+        }
+        if (req.body.receitaSac !== undefined) {
+            const s = parseFloat(req.body.receitaSac);
+            if (!Number.isFinite(s)) return res.status(400).json({ erro: 'Receita SAC inválida' });
+            valores.push(s);
+            campos.push(`receita_sac = $${valores.length}`);
+        }
+
+        if (campos.length === 0) {
+            return res.status(400).json({ erro: 'Nenhum campo para atualizar' });
+        }
+
+        valores.push(id);
+        await dbRun(`UPDATE sales SET ${campos.join(', ')} WHERE id = $${valores.length}`, valores);
+
+        return res.json({ sucesso: true, mensagem: 'Venda atualizada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao atualizar venda:', error);
+        return res.status(500).json({ erro: 'Erro ao atualizar dados' });
     }
 });
 

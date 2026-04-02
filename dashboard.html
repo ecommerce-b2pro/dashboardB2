@@ -2422,7 +2422,7 @@
                         <div class="stat-value">R$ ${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                     </div>
                 </div>
-                <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(top.ecommerce)}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
+                <button class="btn-details" data-eco="${escaparHtml(top.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
             `;
             featuredWrapper.appendChild(featuredCard);
 
@@ -2457,7 +2457,7 @@
                         <div class="stat-item"><span class="stat-lbl">Rec. SAC</span><span class="stat-val">R$ ${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                         <div class="stat-item"><span class="stat-lbl">Rec. Total</span><span class="stat-val">R$ ${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                     </div>
-                    <button class="btn-details" onclick="abrirDetalhesEcommerce(${JSON.stringify(item.ecommerce)}, ${JSON.stringify(mesRef)})">📋 Detalhes por dia</button>
+                    <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
                 `;
                 rankingGrid.appendChild(card);
             }
@@ -2630,7 +2630,7 @@
             });
 
             if (!response.ok) {
-                alert('Não foi possível aprovar o cadastro');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Não foi possível aprovar o cadastro.' });
                 return;
             }
 
@@ -2655,7 +2655,7 @@
             });
 
             if (!response.ok) {
-                alert('Não foi possível recusar o cadastro');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Não foi possível recusar o cadastro.' });
                 return;
             }
 
@@ -2667,27 +2667,31 @@
 
             const response = await apiFetch(`${API_BASE}/admin/users/${userId}`);
             if (!response.ok) {
-                alert('Não foi possível carregar detalhes do usuário');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Não foi possível carregar detalhes do usuário.' });
                 return;
             }
 
             const data = await response.json();
             const user = data.user;
             if (!user) {
-                alert('Usuário não encontrado');
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Usuário não encontrado', mensagem: 'Não foi possível encontrar o usuário solicitado.' });
                 return;
             }
 
             const dataCadastro = user.created_at ? String(user.created_at).replace('T', ' ').slice(0, 19) : '-';
-            alert(
-                `Detalhes do cadastro\n\n` +
-                `ID: ${user.id}\n` +
-                `Usuário: ${user.username}\n` +
-                `E-mail: ${user.email}\n` +
-                `Perfil: ${user.role}\n` +
-                `Status: ${user.status}\n` +
-                `Data de cadastro: ${dataCadastro}`
-            );
+            await mostrarAlerta({
+                icone: '👤',
+                titulo: 'Detalhes do cadastro',
+                mensagem: `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <tr><td style="color:#a78bfa;padding:5px 8px 5px 0;white-space:nowrap;">ID</td><td style="color:#e2e8f0;padding:5px 0;">${escaparHtml(String(user.id))}</td></tr>
+                    <tr><td style="color:#a78bfa;padding:5px 8px 5px 0;white-space:nowrap;">Usuário</td><td style="color:#e2e8f0;padding:5px 0;">${escaparHtml(user.username)}</td></tr>
+                    <tr><td style="color:#a78bfa;padding:5px 8px 5px 0;white-space:nowrap;">E-mail</td><td style="color:#e2e8f0;padding:5px 0;">${escaparHtml(user.email)}</td></tr>
+                    <tr><td style="color:#a78bfa;padding:5px 8px 5px 0;white-space:nowrap;">Perfil</td><td style="color:#e2e8f0;padding:5px 0;">${escaparHtml(user.role)}</td></tr>
+                    <tr><td style="color:#a78bfa;padding:5px 8px 5px 0;white-space:nowrap;">Status</td><td style="color:#e2e8f0;padding:5px 0;">${escaparHtml(user.status)}</td></tr>
+                    <tr><td style="color:#a78bfa;padding:5px 8px 5px 0;white-space:nowrap;">Cadastro</td><td style="color:#e2e8f0;padding:5px 0;">${escaparHtml(dataCadastro)}</td></tr>
+                </table>`,
+                textoConfirmar: 'Fechar'
+            });
         }
 
         async function salvarAlteracoesUsuariosAdmin() {
@@ -2698,7 +2702,7 @@
                 .filter((id) => possuiMudancaAdmin(id));
 
             if (alteracoesPendentes.length === 0) {
-                alert('Nenhuma alteração pendente para salvar.');
+                await mostrarAlerta({ icone: 'ℹ️', titulo: 'Sem alterações', mensagem: 'Nenhuma alteração pendente para salvar.' });
                 return;
             }
 
@@ -2722,7 +2726,7 @@
 
                 if (!updateResponse.ok) {
                     const erro = await updateResponse.json().catch(() => ({}));
-                    alert(`Erro ao salvar usuário ${userId}: ${erro.erro || 'falha na atualização'}`);
+                    await mostrarAlerta({ icone: '❌', titulo: 'Erro ao salvar', mensagem: `Erro ao salvar usuário ${userId}: ${escaparHtml(erro.erro || 'falha na atualização')}` });
                     return;
                 }
 
@@ -2736,7 +2740,7 @@
 
                     if (!passResponse.ok) {
                         const erroSenha = await passResponse.json().catch(() => ({}));
-                        alert(`Erro ao atualizar senha do usuário ${userId}: ${erroSenha.erro || 'falha na senha'}`);
+                        await mostrarAlerta({ icone: '❌', titulo: 'Erro ao atualizar senha', mensagem: `Erro ao atualizar senha do usuário ${userId}: ${escaparHtml(erroSenha.erro || 'falha na senha')}` });
                         return;
                     }
                 }
@@ -2745,13 +2749,28 @@
             adminDraftChanges.clear();
             adminEditingUsers.clear();
             await carregarUsuariosAdmin();
-            alert('Alterações salvas com sucesso.');
+            await mostrarAlerta({ icone: '✅', titulo: 'Sucesso', mensagem: 'Alterações salvas com sucesso.', classeConfirmar: 'btn-success' });
         }
 
         async function alterarPerfilUsuario(userId) {
             if (!ehAdmin()) return;
 
-            const novoPerfil = prompt('Informe o novo perfil (admin, user, viewer):');
+            const selectHtml = `<select id="modalInputField" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;margin-top:8px;">
+                <option value="admin">admin</option>
+                <option value="user">user</option>
+                <option value="viewer">viewer</option>
+            </select>`;
+            const confirmou = await mostrarConfirmModal({
+                icone: '👤',
+                titulo: 'Alterar perfil',
+                mensagem: `<p style="margin-bottom:8px;color:#94a3b8;">Selecione o novo perfil:</p>${selectHtml}`,
+                textoCancelar: 'Cancelar',
+                textoConfirmar: 'Confirmar',
+                classeConfirmar: 'btn-primary'
+            });
+            if (!confirmou) return;
+
+            const novoPerfil = document.getElementById('modalInputField')?.value || '';
             if (!novoPerfil) return;
 
             const response = await apiFetch(`${API_BASE}/admin/users/${userId}/role`, {
@@ -2762,7 +2781,7 @@
 
             if (!response.ok) {
                 const erro = await response.json().catch(() => ({}));
-                alert(erro.erro || 'Não foi possível alterar o perfil');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: escaparHtml(erro.erro || 'Não foi possível alterar o perfil') });
                 return;
             }
 
@@ -2772,7 +2791,14 @@
         async function redefinirSenhaUsuario(userId) {
             if (!ehAdmin()) return;
 
-            const novaSenha = prompt('Digite a nova senha (mínimo 8 caracteres):');
+            const novaSenha = await mostrarInputModal({
+                icone: '🔑',
+                titulo: 'Redefinir senha',
+                mensagem: 'Digite a nova senha (mínimo 8 caracteres):',
+                placeholder: 'Nova senha',
+                tipo: 'password',
+                textoConfirmar: 'Redefinir'
+            });
             if (!novaSenha) return;
 
             const response = await apiFetch(`${API_BASE}/admin/users/${userId}/password`, {
@@ -2783,11 +2809,11 @@
 
             if (!response.ok) {
                 const erro = await response.json().catch(() => ({}));
-                alert(erro.erro || 'Não foi possível redefinir a senha');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: escaparHtml(erro.erro || 'Não foi possível redefinir a senha') });
                 return;
             }
 
-            alert('Senha atualizada com sucesso');
+            await mostrarAlerta({ icone: '✅', titulo: 'Sucesso', mensagem: 'Senha atualizada com sucesso.', classeConfirmar: 'btn-success' });
         }
 
         function atualizarEcommercesDisponiveis() {
@@ -3059,14 +3085,14 @@
             construirGrafico('chartSacDay',       chartSac.dia,   dados, getSac,   'dia');
         }
 
-        function gerarComparativo() {
+        async function gerarComparativo() {
             const ecom1 = document.getElementById('comp1Ecommerce').value;
             const mes1 = document.getElementById('comp1Month').value;
             const ecom2 = document.getElementById('comp2Ecommerce').value;
             const mes2 = document.getElementById('comp2Month').value;
 
             if (!ecom1 || !ecom2 || !mes1 || !mes2) {
-                alert('Por favor, selecione e-commerce e mês nos dois lados do comparativo');
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Campos obrigatórios', mensagem: 'Por favor, selecione e-commerce e mês nos dois lados do comparativo.' });
                 return;
             }
 
@@ -3175,7 +3201,7 @@
 
         async function adicionarVenda() {
             if (!podeEscreverDados()) {
-                alert('Seu perfil não tem permissão para adicionar vendas.');
+                await mostrarAlerta({ icone: '🚫', titulo: 'Sem permissão', mensagem: 'Seu perfil não tem permissão para adicionar vendas.' });
                 return;
             }
 
@@ -3186,7 +3212,7 @@
             const receitaSac = parseFloat(document.getElementById('formReceitaSac').value || '0') || 0;
 
             if (!data || !ecommerce || !vendas_qtd || isNaN(receita)) {
-                alert('Por favor, preencha todos os campos obrigatórios');
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Campos obrigatórios', mensagem: 'Por favor, preencha todos os campos obrigatórios.' });
                 return;
             }
 
@@ -3198,15 +3224,79 @@
                 });
 
                 if (response.ok) {
-                    alert('Venda adicionada com sucesso!');
+                    await mostrarAlerta({ icone: '✅', titulo: 'Sucesso', mensagem: 'Venda adicionada com sucesso!', classeConfirmar: 'btn-success' });
                     limparFormulario();
                     await carregarDados();
+                } else if (response.status === 409) {
+                    const json = await response.json().catch(() => ({}));
+                    const idExistente = json.id;
+
+                    const confirmarAtualizar = await mostrarConfirmModal({
+                        icone: '🔄',
+                        titulo: 'Registro já existe',
+                        mensagem: `Já existe uma venda para <strong>${escaparHtml(ecommerce)}</strong> na data <strong>${formatarData(data)}</strong>.<br><br>Deseja atualizar o registro existente?`,
+                        textoCancelar: 'Não',
+                        textoConfirmar: 'Sim, atualizar',
+                        classeConfirmar: 'btn-primary'
+                    });
+
+                    if (!confirmarAtualizar) return;
+
+                    const confirmarCampos = await mostrarConfirmModal({
+                        icone: '📝',
+                        titulo: 'Selecionar campos',
+                        mensagem: `<p style="margin-bottom:12px;color:#94a3b8;">Selecione quais campos deseja atualizar:</p>
+                            <div style="display:flex;flex-direction:column;gap:10px;text-align:left;">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
+                                    <input type="checkbox" id="updateVendas" checked style="width:16px;height:16px;accent-color:#c084fc;">
+                                    Quantidade de Vendas <strong style="color:#c084fc;">(${vendas_qtd})</strong>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
+                                    <input type="checkbox" id="updateReceita" checked style="width:16px;height:16px;accent-color:#c084fc;">
+                                    Receita Ecommerce <strong style="color:#c084fc;">(R$ ${receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#e2e8f0;">
+                                    <input type="checkbox" id="updateReceitaSac" checked style="width:16px;height:16px;accent-color:#c084fc;">
+                                    Receita SAC <strong style="color:#c084fc;">(R$ ${receitaSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>
+                                </label>
+                            </div>`,
+                        textoCancelar: 'Cancelar',
+                        textoConfirmar: 'Atualizar',
+                        classeConfirmar: 'btn-primary'
+                    });
+
+                    if (!confirmarCampos) return;
+
+                    const payload = {};
+                    if (document.getElementById('updateVendas')?.checked) payload.vendas = vendas_qtd;
+                    if (document.getElementById('updateReceita')?.checked) payload.receita = receita;
+                    if (document.getElementById('updateReceitaSac')?.checked) payload.receitaSac = receitaSac;
+
+                    if (Object.keys(payload).length === 0) {
+                        await mostrarAlerta({ icone: '⚠️', titulo: 'Nenhum campo', mensagem: 'Selecione pelo menos um campo para atualizar.' });
+                        return;
+                    }
+
+                    const updateResponse = await apiFetch(`${API_BASE}/dados/${idExistente}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (updateResponse.ok) {
+                        await mostrarAlerta({ icone: '✅', titulo: 'Sucesso', mensagem: 'Venda atualizada com sucesso!', classeConfirmar: 'btn-success' });
+                        limparFormulario();
+                        await carregarDados();
+                    } else {
+                        const errJson = await updateResponse.json().catch(() => ({}));
+                        await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: escaparHtml(errJson.erro || 'Erro ao atualizar venda.') });
+                    }
                 } else {
                     const json = await response.json().catch(() => ({}));
-                    alert(json.erro || 'Erro ao adicionar venda');
+                    await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: escaparHtml(json.erro || 'Erro ao adicionar venda.') });
                 }
             } catch (error) {
-                alert('Erro ao adicionar venda');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao adicionar venda.' });
             }
         }
 
@@ -3220,7 +3310,7 @@
 
         async function deletarVenda(index) {
             if (!podeEscreverDados()) {
-                alert('Seu perfil não tem permissão para deletar vendas.');
+                await mostrarAlerta({ icone: '🚫', titulo: 'Sem permissão', mensagem: 'Seu perfil não tem permissão para deletar vendas.' });
                 return;
             }
 
@@ -3240,7 +3330,7 @@
                         await carregarDados();
                     }
                 } catch (error) {
-                    alert('Erro ao deletar venda');
+                    await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao deletar venda.' });
                 }
             }
         }
@@ -3429,7 +3519,7 @@
 
         async function deletarSelecionados() {
             if (!podeEscreverDados()) {
-                alert('Seu perfil não tem permissão para deletar vendas.');
+                await mostrarAlerta({ icone: '🚫', titulo: 'Sem permissão', mensagem: 'Seu perfil não tem permissão para deletar vendas.' });
                 return;
             }
 
@@ -3437,7 +3527,7 @@
                 .map(cb => parseInt(cb.dataset.index));
 
             if (indices.length === 0) {
-                alert('Selecione pelo menos uma linha para deletar');
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Nenhum selecionado', mensagem: 'Selecione pelo menos uma linha para deletar.' });
                 return;
             }
 
@@ -3446,7 +3536,7 @@
                 .filter(id => id != null);
 
             if (ids.length === 0) {
-                alert('Não foi possível identificar os registros selecionados. Recarregue a página e tente novamente.');
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Erro', mensagem: 'Não foi possível identificar os registros selecionados. Recarregue a página e tente novamente.' });
                 return;
             }
 
@@ -3502,7 +3592,7 @@
                 }
             } catch (error) {
                 fecharProgressModal();
-                alert('Erro ao deletar registros');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao deletar registros.' });
             }
         }
 
@@ -3520,7 +3610,7 @@
 
         async function handleFileUpload() {
             if (!podeEscreverDados()) {
-                alert('Seu perfil não tem permissão para importar vendas.');
+                await mostrarAlerta({ icone: '🚫', titulo: 'Sem permissão', mensagem: 'Seu perfil não tem permissão para importar vendas.' });
                 return;
             }
 
@@ -3538,17 +3628,17 @@
                 if (response.ok) {
                     const json = await response.json().catch(() => ({}));
                     const mensagem = json.mensagem || 'Arquivo importado com sucesso!';
-                    alert(mensagem);
+                    await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(mensagem), classeConfirmar: 'btn-success' });
                     document.getElementById('fileInput').value = '';
                     document.getElementById('fileName').textContent = '';
                     document.getElementById('importBtn').style.display = 'none';
                     await carregarDados();
                 } else {
                     const json = await response.json().catch(() => ({}));
-                    alert(json.erro || 'Erro ao importar arquivo');
+                    await mostrarAlerta({ icone: '❌', titulo: 'Erro na importação', mensagem: escaparHtml(json.erro || 'Erro ao importar arquivo.') });
                 }
             } catch (error) {
-                alert('Erro ao processar arquivo');
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao processar arquivo.' });
             }
         }
 
@@ -3758,13 +3848,14 @@
         let _confirmResolve = null;
         let _exclusaoCancelada = false;
 
-        function mostrarConfirmModal({ icone = '⚠️', titulo, mensagem, textoCancelar = 'Cancelar', textoConfirmar = 'Confirmar', classeConfirmar = 'btn-danger' } = {}) {
+        function mostrarConfirmModal({ icone = '⚠️', titulo, mensagem, textoCancelar = 'Cancelar', textoConfirmar = 'Confirmar', classeConfirmar = 'btn-danger', apenasOk = false } = {}) {
             return new Promise((resolve) => {
                 _confirmResolve = resolve;
                 document.getElementById('confirmModalIcon').textContent = icone;
                 document.getElementById('confirmModalTitle').textContent = titulo || 'Confirmar ação';
                 document.getElementById('confirmModalMessage').innerHTML = mensagem || '';
                 document.getElementById('confirmModalCancelBtn').textContent = textoCancelar;
+                document.getElementById('confirmModalCancelBtn').style.display = apenasOk ? 'none' : '';
                 document.getElementById('confirmModalOkBtn').textContent = textoConfirmar;
                 document.getElementById('confirmModalOkBtn').className = `btn ${classeConfirmar}`;
                 document.getElementById('confirmModal').classList.add('active');
@@ -3777,6 +3868,26 @@
                 _confirmResolve(resultado);
                 _confirmResolve = null;
             }
+        }
+
+        function mostrarAlerta({ icone = 'ℹ️', titulo = 'Aviso', mensagem, textoConfirmar = 'OK', classeConfirmar = 'btn-primary' } = {}) {
+            return mostrarConfirmModal({ icone, titulo, mensagem, textoConfirmar, classeConfirmar, apenasOk: true });
+        }
+
+        async function mostrarInputModal({ icone = '📝', titulo, mensagem, placeholder = '', tipo = 'text', textoConfirmar = 'Confirmar', classeConfirmar = 'btn-primary' } = {}) {
+            const inputHtml = `<input id="modalInputField" type="${tipo}" placeholder="${escaparHtml(placeholder)}" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;margin-top:8px;box-sizing:border-box;">`;
+            const msgHtml = mensagem ? `<p style="margin-bottom:8px;color:#94a3b8;">${mensagem}</p>${inputHtml}` : inputHtml;
+            const p = mostrarConfirmModal({ icone, titulo, mensagem: msgHtml, textoConfirmar, classeConfirmar });
+            setTimeout(() => {
+                const el = document.getElementById('modalInputField');
+                if (el) {
+                    el.focus();
+                    el.addEventListener('keydown', e => { if (e.key === 'Enter') fecharConfirmModal(true); });
+                }
+            }, 50);
+            const resultado = await p;
+            const el = document.getElementById('modalInputField');
+            return (resultado && el) ? el.value.trim() : null;
         }
 
         function mostrarProgressModal(titulo, subtitulo) {
@@ -3807,11 +3918,18 @@
         }
 
         // ===== ADICIONAR NOVO ECOMMERCE =====
-        function adicionarNovoEcommerce() {
-            const nome = prompt('Digite o nome do novo ecommerce:');
-            if (!nome || !nome.trim()) return;
+        async function adicionarNovoEcommerce() {
+            const nome = await mostrarInputModal({
+                icone: '🏪',
+                titulo: 'Novo ecommerce',
+                mensagem: 'Digite o nome do novo ecommerce:',
+                placeholder: 'Nome do ecommerce',
+                textoConfirmar: 'Adicionar'
+            });
+            if (!nome) return;
 
             const nomeTrimmed = nome.trim();
+            if (!nomeTrimmed) return;
             const formSelect = document.getElementById('formEcommerce');
 
             // Verificar se já existe
