@@ -653,6 +653,57 @@ app.patch('/api/admin/users/:id/status', autenticarToken, autorizarRoles('admin'
     }
 });
 
+app.post('/api/admin/users', autenticarToken, autorizarRoles('admin'), async (req, res) => {
+    try {
+        const usernameBruto = String(req.body.username || '');
+        const username = normalizarUsername(usernameBruto);
+        const email = String(req.body.email || '').trim().toLowerCase();
+        const password = String(req.body.password || '');
+        const role = String(req.body.role || 'viewer').trim().toLowerCase();
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ erro: 'Nome de usuário, e-mail e senha são obrigatórios' });
+        }
+
+        if (!usernameValido(username)) {
+            return res.status(400).json({ erro: 'Nome de usuário inválido. Use 3-32 caracteres: letras, números, ponto, underline ou hífen.' });
+        }
+
+        if (email.length > 254 || !/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(email)) {
+            return res.status(400).json({ erro: 'E-mail inválido' });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({ erro: 'A senha deve ter ao menos 8 caracteres' });
+        }
+
+        if (!['admin', 'user', 'viewer'].includes(role)) {
+            return res.status(400).json({ erro: 'Tipo de usuário inválido' });
+        }
+
+        const usernameExistente = await dbGet('SELECT id FROM users WHERE username = $1', [username]);
+        if (usernameExistente) {
+            return res.status(409).json({ erro: 'Nome de usuário já cadastrado' });
+        }
+
+        const existente = await dbGet('SELECT id FROM users WHERE email = $1', [email]);
+        if (existente) {
+            return res.status(409).json({ erro: 'E-mail já cadastrado' });
+        }
+
+        const hash = await bcrypt.hash(password, 12);
+        await dbRun(
+            'INSERT INTO users (username, email, password_hash, role, status, approved_by) VALUES ($1, $2, $3, $4, $5, $6)',
+            [username, email, hash, role, 'active', req.user.sub]
+        );
+
+        return res.status(201).json({ sucesso: true, mensagem: 'Usuário criado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao criar usuário:', error);
+        return res.status(500).json({ erro: 'Erro interno ao criar usuário' });
+    }
+});
+
 app.get('/api/dados', autenticarToken, autorizarRoles('admin', 'user'), async (req, res) => {
     try {
         const rows = await dbAll('SELECT id, data, ecommerce, vendas, vendas_sac, receita, receita_sac FROM sales ORDER BY data DESC, id DESC');
@@ -805,6 +856,8 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
             return res.status(400).json({ erro: 'Arquivo vazio' });
         }
 
+        const mode = String(req.query.mode || 'skip').trim().toLowerCase();
+
         const workbook = XLSX.read(req.body, { type: 'buffer' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const dados = XLSX.utils.sheet_to_json(worksheet);
@@ -814,6 +867,7 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
 
         let importados = 0;
         let ignorados = 0;
+        let atualizados = 0;
 
         for (const row of dados) {
             const data = converterData(getCampo(row, ['data']));
@@ -827,7 +881,15 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
 
             const chave = `${data}||${ecommerce.toLowerCase()}`;
             if (existentesSet.has(chave)) {
-                ignorados++;
+                if (mode === 'update') {
+                    await dbRun(
+                        'UPDATE sales SET vendas = $1, vendas_sac = $2, receita = $3, receita_sac = $4 WHERE data = $5 AND LOWER(ecommerce) = $6',
+                        [vendas, vendasSac, receita, receitaSac, data, ecommerce.toLowerCase()]
+                    );
+                    atualizados++;
+                } else {
+                    ignorados++;
+                }
                 continue;
             }
 
@@ -839,9 +901,12 @@ app.post('/api/importar', autenticarToken, autorizarRoles('admin'), express.raw(
             importados++;
         }
 
-        const partes = [`${importados} registro(s) importado(s) com sucesso!`];
+        const partes = [];
+        if (importados > 0) partes.push(`${importados} registro(s) importado(s) com sucesso!`);
+        if (atualizados > 0) partes.push(`${atualizados} registro(s) atualizado(s).`);
         if (ignorados > 0) partes.push(`${ignorados} registro(s) ignorado(s) por já estarem cadastrados.`);
-        return res.json({ sucesso: true, mensagem: partes.join(' '), importados, ignorados });
+        if (partes.length === 0) partes.push('Nenhum registro processado.');
+        return res.json({ sucesso: true, mensagem: partes.join(' '), importados, ignorados, atualizados });
     } catch (error) {
         console.error('Erro na importação:', error);
         return res.status(400).json({ erro: 'Erro ao processar arquivo', detalhes: error.message });

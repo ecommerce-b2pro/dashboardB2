@@ -40,8 +40,52 @@
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
+            transition: width 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 30px 0;
+        }
+
+        .sidebar.collapsed .sidebar-header,
+        .sidebar.collapsed nav,
+        .sidebar.collapsed .sidebar-footer {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            left: 260px;
+            z-index: 200;
+            background: #2d1b69;
+            border: 1px solid #4c1d95;
+            color: #c084fc;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: left 0.3s ease, background 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .sidebar-toggle:hover {
+            background: #4c1d95;
+        }
+
+        .sidebar.collapsed ~ .sidebar-toggle,
+        .container.sidebar-collapsed .sidebar-toggle {
+            left: 10px;
         }
 
         .sidebar-header {
@@ -94,6 +138,51 @@
             flex: 1;
             padding: 30px;
             overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .container.sidebar-collapsed .main-content {
+            margin-left: 0;
+        }
+
+        /* Barra superior para viewer (sem sidebar) */
+        .viewer-topbar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 150;
+            background: linear-gradient(90deg, #0a0614 0%, #0f0a1a 100%);
+            border-bottom: 1px solid #4c1d95;
+            padding: 10px 24px;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        }
+
+        .viewer-topbar .user-badge-top {
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: rgba(124, 58, 237, 0.16);
+            border: 1px solid rgba(192, 132, 252, 0.35);
+            color: #ddd6fe;
+            font-size: 13px;
+        }
+
+        body.viewer-mode .viewer-topbar {
+            display: flex;
+        }
+
+        body.viewer-mode .sidebar,
+        body.viewer-mode .sidebar-toggle {
+            display: none !important;
+        }
+
+        body.viewer-mode .main-content {
+            margin-left: 0;
+            padding-top: 65px;
         }
 
         .page {
@@ -108,6 +197,10 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .page-header h1 {
@@ -258,6 +351,7 @@
             box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
             backdrop-filter: blur(4px);
             border-left: 4px solid #c084fc;
+            text-align: center;
         }
 
         .metric-label {
@@ -276,6 +370,23 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
             gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .charts-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-box-full {
+            background: linear-gradient(135deg, rgba(18,9,36,0.94) 0%, rgba(45,27,105,0.9) 100%);
+            padding: 25px;
+            border-radius: 14px;
+            border: 1px solid rgba(196, 132, 252, 0.4);
+            box-shadow: 0 10px 30px rgba(3, 1, 15, 0.7), 0 0 30px rgba(192, 132, 252, 0.35), 0 0 50px rgba(130, 66, 229, 0.35);
+            backdrop-filter: blur(4px);
             margin-bottom: 30px;
         }
 
@@ -608,6 +719,10 @@
                 width: 200px;
             }
 
+            .sidebar-toggle {
+                left: 210px;
+            }
+
             .main-content {
                 margin-left: 200px;
                 padding: 20px;
@@ -618,6 +733,10 @@
             }
 
             .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid-2col {
                 grid-template-columns: 1fr;
             }
 
@@ -1133,6 +1252,24 @@
             margin-bottom: 30px;
         }
 
+        /* 2 ecommerces: dois cards iguais lado a lado */
+        .sales-ranking-grid.grid-2-equal {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* 3+ ecommerces: máx 3 por linha, centralizado */
+        .sales-ranking-grid.grid-multi {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            max-width: 1100px;
+            margin: 0 auto 30px;
+            gap: 20px;
+            justify-items: stretch;
+        }
+
         .sales-rank-card {
             background: linear-gradient(135deg, rgba(109,40,217,0.45) 0%, rgba(45,27,105,0.97) 100%);
             border: 2px solid rgba(196, 132, 252, 0.6);
@@ -1211,6 +1348,50 @@
             color: #a78bfa;
             padding: 50px 0;
             font-size: 18px;
+        }
+
+        /* === AUTO-REFRESH BADGE & ANIMAÇÃO === */
+        .sales-refresh-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(124, 58, 237, 0.18);
+            border: 1px solid rgba(192, 132, 252, 0.4);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            color: #c4b5fd;
+            margin-bottom: 4px;
+        }
+
+        .sales-refresh-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c084fc;
+            flex-shrink: 0;
+        }
+
+        .sales-refresh-dot.pulsing {
+            animation: dotPulse 1.2s ease-out;
+        }
+
+        @keyframes dotPulse {
+            0%   { transform: scale(1);   background: #c084fc; box-shadow: 0 0 0 0 rgba(192,132,252,0.7); }
+            40%  { transform: scale(1.6); background: #e879f9; box-shadow: 0 0 0 6px rgba(192,132,252,0); }
+            100% { transform: scale(1);   background: #c084fc; box-shadow: 0 0 0 0 rgba(192,132,252,0); }
+        }
+
+        @keyframes salesFlash {
+            0%   { opacity: 1; }
+            20%  { opacity: 0.35; }
+            60%  { opacity: 1; }
+            80%  { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .sales-refresh-flash {
+            animation: salesFlash 0.8s ease-in-out;
         }
 
         /* === SORT ARROWS - BANCO DE DADOS === */
@@ -1614,8 +1795,51 @@
         </div>
     </div>
 
+    <!-- MODAL CRIAR USUÁRIO -->
+    <div id="createUserModal" class="custom-modal-overlay">
+        <div class="custom-modal-box" style="min-width: 360px; max-width: 480px;">
+            <div class="custom-modal-icon">👤</div>
+            <div class="custom-modal-title">Criar Usuário</div>
+            <div class="custom-modal-message" style="text-align:left;">
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">Nome de usuário</label>
+                        <input id="createUserUsername" type="text" placeholder="usuario123" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">E-mail</label>
+                        <input id="createUserEmail" type="email" placeholder="email@exemplo.com" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">Senha</label>
+                        <input id="createUserPassword" type="password" placeholder="Mínimo 8 caracteres" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#a78bfa;display:block;margin-bottom:4px;">Tipo de usuário</label>
+                        <select id="createUserRole" style="width:100%;padding:8px 12px;background:#0f0a1a;border:1px solid #4c1d95;border-radius:8px;color:#e2e8f0;font-size:14px;box-sizing:border-box;">
+                            <option value="viewer">viewer</option>
+                            <option value="user">user</option>
+                            <option value="admin">admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModalCriarUsuario()">Cancelar</button>
+                <button class="btn btn-success" onclick="confirmarCriarUsuario()">✅ Criar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra superior para usuários viewer (sem menu lateral) -->
+    <div class="viewer-topbar" id="viewerTopbar">
+        <div class="user-badge-top" id="viewerUserBadge"></div>
+        <button class="btn btn-danger" style="padding:6px 16px;font-size:13px;" onclick="logout()">Sair</button>
+    </div>
+
     <div class="container">
-        <aside class="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Abrir/Fechar menu">☰</button>
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1>📊 Hub de Vendas</h1>
             </div>
@@ -1696,19 +1920,19 @@
                 </div>
 
                 <h3 style="color:#10b981; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🛒 Receita Ecommerce</h3>
-                <div class="charts-container">
+                <div class="charts-grid-2col">
                     <div class="chart-box">
                         <div class="chart-title">Receita Ecommerce por Mês</div>
                         <canvas id="chartEcoMonth"></canvas>
                     </div>
                     <div class="chart-box">
-                        <div class="chart-title">Receita Ecommerce por Dia</div>
-                        <canvas id="chartEcoDay"></canvas>
-                    </div>
-                    <div class="chart-box">
                         <div class="chart-title">Vendas Ecommerce por Mês</div>
                         <canvas id="chartVendasEcoMonth"></canvas>
                     </div>
+                </div>
+                <div class="chart-box-full">
+                    <div class="chart-title">Receita Ecommerce por Dia</div>
+                    <canvas id="chartEcoDay"></canvas>
                 </div>
 
                 <h3 style="color:#f59e0b; margin-bottom:12px; font-size:15px; letter-spacing:0.4px;">🎧 Receita SAC</h3>
@@ -1885,8 +2109,12 @@
             </div>
 
             <div id="sales" class="page">
-                <div class="page-header">
-                    <h1>Vendas</h1>
+                <div class="page-header" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                    <h1 style="margin-bottom:0;">Vendas</h1>
+                    <div id="salesAutoRefreshBadge" class="sales-refresh-badge" style="display:none;">
+                        <span class="sales-refresh-dot"></span>
+                        <span id="salesLastUpdatedLabel">Atualizado agora</span>
+                    </div>
                 </div>
 
                 <!-- Filtro de mês -->
@@ -1918,6 +2146,7 @@
                     <div class="permissao-aviso">Apenas administradores podem aprovar cadastros, alterar perfil e redefinir senha.</div>
                     <div class="filter-buttons" style="margin-bottom: 12px;">
                         <button class="btn btn-primary" onclick="carregarUsuariosAdmin()">🔄 Atualizar Lista</button>
+                        <button class="btn btn-success" onclick="abrirModalCriarUsuario()">➕ Criar Usuário</button>
                     </div>
                     <div class="table-container" style="margin-bottom: 0;">
                         <table class="admin-table">
@@ -2066,13 +2295,15 @@
 
         function atualizarUserBadge() {
             const badge = document.getElementById('userBadge');
+            const viewerBadge = document.getElementById('viewerUserBadge');
+            let texto = 'Não autenticado';
             if (authUser && authUser.username) {
-                badge.textContent = `Usuário: ${authUser.username} (${authUser.role || 'sem perfil'})`;
+                texto = `${authUser.username} (${authUser.role || 'sem perfil'})`;
             } else if (authUser && authUser.email) {
-                badge.textContent = `Usuário: ${authUser.email}`;
-            } else {
-                badge.textContent = 'Não autenticado';
+                texto = authUser.email;
             }
+            if (badge) badge.textContent = `Usuário: ${texto}`;
+            if (viewerBadge) viewerBadge.textContent = texto;
         }
 
         function perfilAtual() {
@@ -2102,6 +2333,13 @@
 
             if (navDashboard) navDashboard.style.display = ehViewer() ? 'none' : 'block';
             if (navDatabase) navDatabase.style.display = ehViewer() ? 'none' : 'block';
+
+            // Viewer: ocultar sidebar e mostrar barra superior com nome e botão Sair
+            if (ehViewer()) {
+                document.body.classList.add('viewer-mode');
+            } else {
+                document.body.classList.remove('viewer-mode');
+            }
 
             const uploadSection = document.querySelector('#database .upload-section');
             const formContainer = document.querySelector('#database .form-container');
@@ -2429,13 +2667,14 @@
         }
 
         function inicializarFiltroVendas() {
+            agendarAutoRefreshVendas();
             carregarMesesDisponiveis().then(meses => {
                 preencherSelectMes('salesMonthFilter', meses);
                 carregarVendasMes();
             });
         }
 
-        async function carregarVendasMes() {
+        async function carregarVendasMes(mostrarFlash) {
             const filtro = document.getElementById('salesMonthFilter');
             if (!filtro || !filtro.value) return;
 
@@ -2446,8 +2685,58 @@
 
                 const data = await response.json();
                 renderizarVendasMes(data);
+                if (mostrarFlash) animarRefreshVendas();
             } catch (error) {
                 console.error('Erro ao carregar vendas do mês:', error);
+            }
+        }
+
+        // === AUTO-REFRESH VENDAS (a cada hora cheia) ===
+        let _salesRefreshTimer = null;
+
+        function agendarAutoRefreshVendas() {
+            if (_salesRefreshTimer) clearTimeout(_salesRefreshTimer);
+            const agora = new Date();
+            const msAteProximaHora = ((60 - agora.getMinutes()) * 60 - agora.getSeconds()) * 1000 - agora.getMilliseconds();
+            _salesRefreshTimer = setTimeout(async () => {
+                await carregarVendasMes(true);
+                agendarAutoRefreshVendas();
+            }, msAteProximaHora);
+        }
+
+        function cancelarAutoRefreshVendas() {
+            if (_salesRefreshTimer) {
+                clearTimeout(_salesRefreshTimer);
+                _salesRefreshTimer = null;
+            }
+        }
+
+        function animarRefreshVendas() {
+            const badge = document.getElementById('salesAutoRefreshBadge');
+            const dot = badge ? badge.querySelector('.sales-refresh-dot') : null;
+            const label = document.getElementById('salesLastUpdatedLabel');
+            const salesPage = document.getElementById('sales');
+
+            // Atualiza horário
+            const agora = new Date();
+            const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            if (label) label.textContent = `Atualizado às ${hora}`;
+            if (badge) badge.style.display = 'inline-flex';
+
+            // Pulsa o dot
+            if (dot) {
+                dot.classList.remove('pulsing');
+                void dot.offsetWidth; // reflow para reiniciar animação
+                dot.classList.add('pulsing');
+                setTimeout(() => dot.classList.remove('pulsing'), 1300);
+            }
+
+            // Flash nos cards
+            if (salesPage) {
+                salesPage.classList.remove('sales-refresh-flash');
+                void salesPage.offsetWidth;
+                salesPage.classList.add('sales-refresh-flash');
+                setTimeout(() => salesPage.classList.remove('sales-refresh-flash'), 900);
             }
         }
 
@@ -2470,73 +2759,75 @@
             }
             noDataEl.style.display = 'none';
 
-            // Card destaque — loja top 1 em receita total
-            const top = itens[0];
-            const topRecHojeTotal = (top.receitaHoje || 0);
-            const topRecHojeEco = (top.receitaEcommerceHoje || 0);
-            const topRecHojeSac = (top.receitaSacHoje || 0);
-            const topVendasEco = (top.vendasEco || 0);
-            const topVendasSac = (top.vendasSac || 0);
-            const topRecEco = (top.receitaEcommerce || top.receita || 0);
-            const topRecSac = (top.receitaSac || 0);
-            const topRecTotal = (top.receitaTotal || topRecEco + topRecSac);
+            const buildFeaturedCard = (item, rankLabel, isEqual) => {
+                const recHojeTotal = (item.receitaHoje || 0);
+                const recHojeEco = (item.receitaEcommerceHoje || 0);
+                const recHojeSac = (item.receitaSacHoje || 0);
+                const vendasEco = (item.vendasEco || 0);
+                const vendasSac = (item.vendasSac || 0);
+                const recEco = (item.receitaEcommerce || item.receita || 0);
+                const recSac = (item.receitaSac || 0);
+                const recTotal = (item.receitaTotal || recEco + recSac);
 
-            const featuredCard = document.createElement('div');
-            featuredCard.className = 'sales-featured-card';
-            featuredCard.innerHTML = `
-                <div class="rank-badge">🏆 #1 LOJA TOP</div>
-                <div class="store-name">${escaparHtml(top.ecommerce)}</div>
-                <div class="sales-day-highlight">
-                    <div class="day-label">${escaparHtml(hojeLabel)}</div>
-                    <div class="day-value">R$ ${topRecHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                    <div class="sales-day-sac-row">
-                        <div class="sales-day-sac-item">Eco: <span>R$ ${topRecHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                        <div class="sales-day-sac-item">SAC: <span>R$ ${topRecHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                    </div>
-                </div>
-                <div class="stats-section-header">📊 Total do Mês</div>
-                <div class="sales-stats-4">
-                    <div class="sales-stat">
-                        <div class="stat-label">Vendas Eco</div>
-                        <div class="stat-qty-body">
-                            <div class="stat-value">${topVendasEco}</div>
+                const card = document.createElement('div');
+                card.className = 'sales-featured-card';
+                if (isEqual) {
+                    card.style.maxWidth = '100%';
+                    card.style.minWidth = '0';
+                }
+                card.innerHTML = `
+                    <div class="rank-badge">${escaparHtml(rankLabel)}</div>
+                    <div class="store-name">${escaparHtml(item.ecommerce)}</div>
+                    <div class="sales-day-highlight">
+                        <div class="day-label">${escaparHtml(hojeLabel)}</div>
+                        <div class="day-value">R$ ${recHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div class="sales-day-sac-row">
+                            <div class="sales-day-sac-item">Eco: <span>R$ ${recHojeEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                            <div class="sales-day-sac-item">SAC: <span>R$ ${recHojeSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                         </div>
                     </div>
-                    <div class="sales-stat">
-                        <div class="stat-label">Rec. Ecommerce</div>
-                        <div class="stat-fin-body">
-                            <div class="stat-currency">R$</div>
-                            <div class="stat-value">${topRecEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div class="stats-section-header">📊 Total do Mês</div>
+                    <div class="sales-stats-4">
+                        <div class="sales-stat">
+                            <div class="stat-label">Vendas Eco</div>
+                            <div class="stat-qty-body">
+                                <div class="stat-value">${vendasEco}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat">
+                            <div class="stat-label">Rec. Ecommerce</div>
+                            <div class="stat-fin-body">
+                                <div class="stat-currency">R$</div>
+                                <div class="stat-value">${recEco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat">
+                            <div class="stat-label">Vendas SAC</div>
+                            <div class="stat-qty-body">
+                                <div class="stat-value">${vendasSac}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat">
+                            <div class="stat-label">Rec. SAC</div>
+                            <div class="stat-fin-body">
+                                <div class="stat-currency">R$</div>
+                                <div class="stat-value">${recSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            </div>
+                        </div>
+                        <div class="sales-stat" style="grid-column: span 2;">
+                            <div class="stat-label">Rec. Total</div>
+                            <div class="stat-fin-body">
+                                <div class="stat-currency">R$</div>
+                                <div class="stat-value">${recTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="sales-stat">
-                        <div class="stat-label">Vendas SAC</div>
-                        <div class="stat-qty-body">
-                            <div class="stat-value">${topVendasSac}</div>
-                        </div>
-                    </div>
-                    <div class="sales-stat">
-                        <div class="stat-label">Rec. SAC</div>
-                        <div class="stat-fin-body">
-                            <div class="stat-currency">R$</div>
-                            <div class="stat-value">${topRecSac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        </div>
-                    </div>
-                    <div class="sales-stat" style="grid-column: span 2;">
-                        <div class="stat-label">Rec. Total</div>
-                        <div class="stat-fin-body">
-                            <div class="stat-currency">R$</div>
-                            <div class="stat-value">${topRecTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn-details" data-eco="${escaparHtml(top.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
-            `;
-            featuredWrapper.appendChild(featuredCard);
+                    <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
+                `;
+                return card;
+            };
 
-            // Cards das demais lojas (ranking)
-            for (let i = 1; i < itens.length; i++) {
-                const item = itens[i];
+            const buildRankCard = (item, rank) => {
                 const recHojeTotal = (item.receitaHoje || 0);
                 const recHojeEco = (item.receitaEcommerceHoje || 0);
                 const recHojeSac = (item.receitaSacHoje || 0);
@@ -2549,7 +2840,7 @@
                 const card = document.createElement('div');
                 card.className = 'sales-rank-card';
                 card.innerHTML = `
-                    <div class="rank-number">#${i + 1}</div>
+                    <div class="rank-number">#${rank}</div>
                     <div class="store-name">${escaparHtml(item.ecommerce)}</div>
                     <div class="sales-day-highlight">
                         <span class="day-label">${escaparHtml(hojeLabel)}</span>
@@ -2601,7 +2892,30 @@
                     </div>
                     <button class="btn-details" data-eco="${escaparHtml(item.ecommerce)}" data-mes="${escaparHtml(mesRef)}" onclick="abrirDetalhesEcommerce(this.dataset.eco, this.dataset.mes)">📋 Detalhes por dia</button>
                 `;
-                rankingGrid.appendChild(card);
+                return card;
+            };
+
+            if (itens.length === 1) {
+                // Um único ecommerce: card destaque centralizado
+                featuredWrapper.classList.remove('hidden');
+                featuredWrapper.appendChild(buildFeaturedCard(itens[0], '🏆 #1 LOJA TOP', false));
+
+            } else if (itens.length === 2) {
+                // Dois ecommerces: dois cards iguais lado a lado, sem área featuredWrapper separada
+                featuredWrapper.classList.add('hidden');
+                rankingGrid.className = 'sales-ranking-grid grid-2-equal';
+                rankingGrid.appendChild(buildFeaturedCard(itens[0], '🏆 #1 LOJA TOP', true));
+                rankingGrid.appendChild(buildFeaturedCard(itens[1], '🥈 #2', true));
+
+            } else {
+                // 3+ ecommerces: #1 em destaque, demais no grid multi (máx 3 por linha)
+                featuredWrapper.classList.remove('hidden');
+                featuredWrapper.appendChild(buildFeaturedCard(itens[0], '🏆 #1 LOJA TOP', false));
+
+                rankingGrid.className = 'sales-ranking-grid grid-multi';
+                for (let i = 1; i < itens.length; i++) {
+                    rankingGrid.appendChild(buildRankCard(itens[i], i + 1));
+                }
             }
         }
 
@@ -3061,6 +3375,8 @@
 
             if (destino === 'sales') {
                 inicializarFiltroVendas();
+            } else {
+                cancelarAutoRefreshVendas();
             }
 
             navegarParaPagina(destino);
@@ -3808,16 +4124,49 @@
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                const response = await apiFetch(`${API_BASE}/importar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/octet-stream' },
-                    body: arrayBuffer
-                });
+
+                const doImport = async (mode) => {
+                    const url = mode === 'update' ? `${API_BASE}/importar?mode=update` : `${API_BASE}/importar`;
+                    return apiFetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/octet-stream' },
+                        body: arrayBuffer
+                    });
+                };
+
+                const response = await doImport('skip');
 
                 if (response.ok) {
                     const json = await response.json().catch(() => ({}));
-                    const mensagem = json.mensagem || 'Arquivo importado com sucesso!';
-                    await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(mensagem), classeConfirmar: 'btn-success' });
+
+                    if (json.ignorados > 0) {
+                        const atualizar = await mostrarConfirmModal({
+                            icone: '🔄',
+                            titulo: 'Registros duplicados encontrados',
+                            mensagem: `Foram encontrados <strong>${json.ignorados}</strong> registro(s) com data e ecommerce já existentes no banco de dados.<br><br>Deseja <strong>atualizar</strong> os dados existentes com os valores da planilha?`,
+                            textoCancelar: 'Não, manter os atuais',
+                            textoConfirmar: 'Sim, atualizar',
+                            classeConfirmar: 'btn-primary'
+                        });
+
+                        if (atualizar) {
+                            const respUpdate = await doImport('update');
+                            if (respUpdate.ok) {
+                                const jsonUpdate = await respUpdate.json().catch(() => ({}));
+                                await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(jsonUpdate.mensagem || 'Arquivo importado e registros atualizados!'), classeConfirmar: 'btn-success' });
+                            } else {
+                                const jsonErr = await respUpdate.json().catch(() => ({}));
+                                await mostrarAlerta({ icone: '❌', titulo: 'Erro na atualização', mensagem: escaparHtml(jsonErr.erro || 'Erro ao atualizar registros.') });
+                            }
+                        } else if (json.importados > 0) {
+                            await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(json.mensagem || 'Arquivo importado com sucesso!'), classeConfirmar: 'btn-success' });
+                        } else {
+                            await mostrarAlerta({ icone: 'ℹ️', titulo: 'Nenhum registro novo', mensagem: escaparHtml(json.mensagem || 'Todos os registros já existem no banco.') });
+                        }
+                    } else {
+                        await mostrarAlerta({ icone: '✅', titulo: 'Importação concluída', mensagem: escaparHtml(json.mensagem || 'Arquivo importado com sucesso!'), classeConfirmar: 'btn-success' });
+                    }
+
                     document.getElementById('fileInput').value = '';
                     document.getElementById('fileName').textContent = '';
                     document.getElementById('importBtn').style.display = 'none';
@@ -4017,6 +4366,68 @@
         // ===== MODAIS CUSTOMIZADOS =====
         let _confirmResolve = null;
         let _exclusaoCancelada = false;
+
+        // ===== SIDEBAR TOGGLE =====
+        function toggleSidebar() {
+            const container = document.querySelector('.container');
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const collapsed = container.classList.toggle('sidebar-collapsed');
+            sidebar.classList.toggle('collapsed', collapsed);
+            toggle.textContent = collapsed ? '☰' : '✕';
+            toggle.style.left = collapsed ? '10px' : '260px';
+        }
+
+        // ===== CRIAR USUÁRIO (ADMIN) =====
+        function abrirModalCriarUsuario() {
+            document.getElementById('createUserUsername').value = '';
+            document.getElementById('createUserEmail').value = '';
+            document.getElementById('createUserPassword').value = '';
+            document.getElementById('createUserRole').value = 'viewer';
+            document.getElementById('createUserModal').classList.add('active');
+            setTimeout(() => document.getElementById('createUserUsername').focus(), 50);
+        }
+
+        function fecharModalCriarUsuario() {
+            document.getElementById('createUserModal').classList.remove('active');
+        }
+
+        async function confirmarCriarUsuario() {
+            const username = document.getElementById('createUserUsername').value.trim();
+            const email = document.getElementById('createUserEmail').value.trim();
+            const password = document.getElementById('createUserPassword').value;
+            const role = document.getElementById('createUserRole').value;
+
+            if (!username || !email || !password) {
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Campos obrigatórios', mensagem: 'Preencha todos os campos.' });
+                return;
+            }
+
+            if (password.length < 8) {
+                await mostrarAlerta({ icone: '⚠️', titulo: 'Senha fraca', mensagem: 'A senha deve ter ao menos 8 caracteres.' });
+                return;
+            }
+
+            fecharModalCriarUsuario();
+
+            try {
+                const response = await apiFetch(`${API_BASE}/admin/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password, role })
+                });
+
+                if (response.ok) {
+                    await mostrarAlerta({ icone: '✅', titulo: 'Usuário criado', mensagem: 'Usuário criado com sucesso.', classeConfirmar: 'btn-success' });
+                    await carregarUsuariosAdmin();
+                } else {
+                    const erro = await response.json().catch(() => ({}));
+                    await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: escaparHtml(erro.erro || 'Não foi possível criar o usuário.') });
+                }
+            } catch (error) {
+                await mostrarAlerta({ icone: '❌', titulo: 'Erro', mensagem: 'Erro ao comunicar com o servidor.' });
+            }
+        }
 
         function mostrarConfirmModal({ icone = '⚠️', titulo, mensagem, textoCancelar = 'Cancelar', textoConfirmar = 'Confirmar', classeConfirmar = 'btn-danger', apenasOk = false } = {}) {
             return new Promise((resolve) => {
@@ -4271,6 +4682,13 @@
             document.getElementById('detailsModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     fecharDetalhesModal();
+                }
+            });
+
+            // Fechar modal criar usuário ao clicar fora
+            document.getElementById('createUserModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    fecharModalCriarUsuario();
                 }
             });
         });
