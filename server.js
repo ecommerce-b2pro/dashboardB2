@@ -655,7 +655,7 @@ app.patch('/api/admin/users/:id/status', autenticarToken, autorizarRoles('admin'
 
 app.get('/api/dados', autenticarToken, autorizarRoles('admin', 'user'), async (req, res) => {
     try {
-        const rows = await dbAll('SELECT id, data, ecommerce, vendas, vendas_sac, receita, receita_sac FROM sales ORDER BY id ASC');
+        const rows = await dbAll('SELECT id, data, ecommerce, vendas, vendas_sac, receita, receita_sac FROM sales ORDER BY data DESC, id DESC');
         const dados = rows.map((row) => ({
             Data: row.data,
             Ecommerce: row.ecommerce,
